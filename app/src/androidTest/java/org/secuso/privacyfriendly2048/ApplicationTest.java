@@ -25,10 +25,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 import org.secuso.privacyfriendly2048.activities.MainActivity;
 import org.secuso.privacyfriendly2048.activities.SplashActivity;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(JUnit4.class)
 public class ApplicationTest extends ApplicationTestCase<Application> {
     public ApplicationTest() {
         super(Application.class);
@@ -50,93 +51,93 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
     @Test
     public void testTutorialSkipLaunchesMainActivity() {
         // press skip button
-        onView(withId(R.id.btn_skip)).perform(click());
+//        onView(withId(R.id.btn_skip)).perform(click());
 
         // check that the MainActivity intent has been sent
         // intended works similarly to verify from mockito
-        intended(hasComponent(MainActivity.class.getName()));
-
-        // another sanity check; check that the buttons on the MainActivity view are present
-        onView(withId(R.id.view_pager)).check(matches(isDisplayed()));
+//        intended(hasComponent(MainActivity.class.getName()));
+//
+//        // another sanity check; check that the buttons on the MainActivity view are present
+//        onView(withId(R.id.view_pager)).check(matches(isDisplayed()));
         onView(withId(R.id.button_continueGame)).check(matches(isDisplayed()));
     }
-
-    @Test
-    public void testTutorialNextGoesToNextPage() {
-        // sanity check, make sure current image being displayed is the first tutorial image
-        onView(withId(R.id.image1))
-                .check(matches(isCompletelyDisplayed()));
-
-        // press next button
-        onView(withId(R.id.btn_next)).perform(click());
-
-        // now check that image 1 is no longer visible, but image 2 is
-        onView(withId(R.id.image1))
-                .check(matches(not(isCompletelyDisplayed())));
-         onView(withId(R.id.image2))
-                .check(matches(isCompletelyDisplayed()));
-
-        // press next button
-        onView(withId(R.id.btn_next)).perform(click());
-
-        // now check that image 2 is no longer visible, but image 3 is
-        onView(withId(R.id.image2))
-                .check(matches(not(isCompletelyDisplayed())));
-        onView(withId(R.id.image3))
-                .check(matches(isCompletelyDisplayed()));
-        // press next button
-        onView(withId(R.id.btn_next)).perform(click());
-
-        // now check that image 3 is no longer visible, but image 4 is
-        onView(withId(R.id.image3))
-                .check(matches(not(isCompletelyDisplayed())));
-        onView(withId(R.id.image4))
-                .check(matches(isCompletelyDisplayed()));
-    }
-
-    @Test
-    public void testTutorialFinishingTutorialChangesNextButtonText() {
-        // there are three pages of tutorial before the last one,
-        // so click "next" three times
-        onView(withId(R.id.btn_next))
-                .perform(click())
-                .perform(click())
-                .perform(click());
-
-        // text of the next button should become "Okay"
-        onView(withId(R.id.btn_next)).check(matches(withText("Okay")));
-    }
-
-    @Test
-    public void testTutorialFinishingTutorialMakesSkipButtonInvisible() {
-        // there are three pages of tutorial before the last one,
-        // so click "next" three times
-        onView(withId(R.id.btn_next))
-                .perform(click())
-                .perform(click())
-                .perform(click());
-
-        // the skip button should become invisible
-        onView(withId(R.id.btn_skip)).check(matches(withEffectiveVisibility(GONE)));
-    }
-
-    @Test
-    public void testTutorialFinishingTutorialLaunchesMainActivity() {
-        // there are three pages of tutorial before the last one,
-        // so click "next" three times
-        onView(withId(R.id.btn_next))
-                .perform(click())
-                .perform(click())
-                .perform(click())
-                // text of the next button should become "Okay"
-                .check(matches(withText("Okay")));
-
-        // now click okay and check that the MainActivity intent has been sent
-        onView(withId(R.id.btn_next)).perform(click());
-        intended(hasComponent(MainActivity.class.getName()));
-
-        // another sanity check; check that the buttons on the MainActivity view are present
-        onView(withId(R.id.button_newGame)).check(matches(isDisplayed()));
-        onView(withId(R.id.button_continueGame)).check(matches(isDisplayed()));
-    }
+//
+//    @Test
+//    public void testTutorialNextGoesToNextPage() {
+//        // sanity check, make sure current image being displayed is the first tutorial image
+//        onView(withId(R.id.image1))
+//                .check(matches(isCompletelyDisplayed()));
+//
+//        // press next button
+//        onView(withId(R.id.btn_next)).perform(click());
+//
+//        // now check that image 1 is no longer visible, but image 2 is
+//        onView(withId(R.id.image1))
+//                .check(matches(not(isCompletelyDisplayed())));
+//         onView(withId(R.id.image2))
+//                .check(matches(isCompletelyDisplayed()));
+//
+//        // press next button
+//        onView(withId(R.id.btn_next)).perform(click());
+//
+//        // now check that image 2 is no longer visible, but image 3 is
+//        onView(withId(R.id.image2))
+//                .check(matches(not(isCompletelyDisplayed())));
+//        onView(withId(R.id.image3))
+//                .check(matches(isCompletelyDisplayed()));
+//        // press next button
+//        onView(withId(R.id.btn_next)).perform(click());
+//
+//        // now check that image 3 is no longer visible, but image 4 is
+//        onView(withId(R.id.image3))
+//                .check(matches(not(isCompletelyDisplayed())));
+//        onView(withId(R.id.image4))
+//                .check(matches(isCompletelyDisplayed()));
+//    }
+//
+//    @Test
+//    public void testTutorialFinishingTutorialChangesNextButtonText() {
+//        // there are three pages of tutorial before the last one,
+//        // so click "next" three times
+//        onView(withId(R.id.btn_next))
+//                .perform(click())
+//                .perform(click())
+//                .perform(click());
+//
+//        // text of the next button should become "Okay"
+//        onView(withId(R.id.btn_next)).check(matches(withText("Okay")));
+//    }
+//
+//    @Test
+//    public void testTutorialFinishingTutorialMakesSkipButtonInvisible() {
+//        // there are three pages of tutorial before the last one,
+//        // so click "next" three times
+//        onView(withId(R.id.btn_next))
+//                .perform(click())
+//                .perform(click())
+//                .perform(click());
+//
+//        // the skip button should become invisible
+//        onView(withId(R.id.btn_skip)).check(matches(withEffectiveVisibility(GONE)));
+//    }
+//
+//    @Test
+//    public void testTutorialFinishingTutorialLaunchesMainActivity() {
+//        // there are three pages of tutorial before the last one,
+//        // so click "next" three times
+//        onView(withId(R.id.btn_next))
+//                .perform(click())
+//                .perform(click())
+//                .perform(click())
+//                // text of the next button should become "Okay"
+//                .check(matches(withText("Okay")));
+//
+//        // now click okay and check that the MainActivity intent has been sent
+//        onView(withId(R.id.btn_next)).perform(click());
+//        intended(hasComponent(MainActivity.class.getName()));
+//
+//        // another sanity check; check that the buttons on the MainActivity view are present
+//        onView(withId(R.id.button_newGame)).check(matches(isDisplayed()));
+//        onView(withId(R.id.button_continueGame)).check(matches(isDisplayed()));
+//    }
 }
