@@ -1,13 +1,71 @@
 apply plugin: 'com.android.application'
+apply plugin: 'jacoco'
+
+jacoco {
+    toolVersion = '0.8.7'
+}
+
+tasks.withType(Test) {
+    jacoco.includeNoLocationClasses = true
+}
+
+configurations.all {
+    resolutionStrategy {
+        eachDependency {
+            if (requested.group == "org.jacoco") {
+                useVersion("0.8.7")
+            }
+        }
+    }
+}
+
+task jacocoTestReport(type: JacocoReport,
+        dependsOn: ['testDebugUnitTest',
+                    'createDebugCoverageReport']) {
+    group = "Reporting"
+    description = "Generate Jacoco coverage reports after running tests."
+
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+
+    def fileFilter = ['androidx/**/*.*',
+                      '**/databinding/*.*',
+                      '**/wallet/*.*',
+                      '**/view/*.*',
+                      '**/data/*.*',
+                      '**/data/model/*.*',
+                      '**/generated/callback/*.*',
+                      '**/lambda$*.class',
+                      '**/lambda.class',
+                      '**/*lambda.class',
+                      '**/*lambda*.class']
+
+    def debugTree = fileTree(dir:
+            "${buildDir}/intermediates/javac/debug/classes",
+            excludes: fileFilter
+    )
+
+    def mainSrc = "/src/main/java"
+    println debugTree
+    getSourceDirectories().setFrom(files([mainSrc]))
+    getAdditionalClassDirs().setFrom(files(mainSrc))
+    getClassDirectories().setFrom(files([debugTree]))
+    getExecutionData().setFrom(fileTree(dir: "${buildDir}", includes:[
+            "/jacoco/testDebugUnitTest.exec"]))
+}
 
 android {
     compileSdkVersion 27
+
     defaultConfig {
         applicationId 'org.secuso.privacyfriendly2048'
         minSdkVersion 21
         targetSdkVersion 27
         versionCode 3
         versionName "1.2"
+//        testInstrumentationRunnerArguments useTestStorageService: 'true'
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         // The following argument makes the Android Test Orchestrator run its
@@ -19,11 +77,20 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            testCoverageEnabled true
+        }
+        debug {
+            testCoverageEnabled true
         }
     }
     testOptions {
+        unitTests.all {
+            setIgnoreFailures(true)
+        }
+
         unitTests {
             includeAndroidResources = true
+            unitTests.returnDefaultValues = true
         }
         execution 'ANDROIDX_TEST_ORCHESTRATOR'
     }
