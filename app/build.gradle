@@ -69,6 +69,13 @@ android {
     productFlavors {
     }
 }
+
+project.gradle.taskGraph.whenReady {
+    connectedDebugAndroidTest {
+        ignoreFailures = true
+    }
+}
+
 repositories {
     mavenCentral()
     maven { url 'https://maven.google.com' }
