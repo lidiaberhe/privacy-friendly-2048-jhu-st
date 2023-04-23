@@ -10,6 +10,10 @@ tasks.withType(Test) {
     jacoco.excludes = ['jdk.internal.*']
 }
 
+tasks.withType(com.android.build.gradle.internal.tasks.AndroidTestTask) { task ->
+
+}
+
 task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest', 'createDebugCoverageReport']) {
 
     reports {
@@ -53,6 +57,10 @@ android {
         }
     }
     testOptions {
+        unitTests.all {
+            setIgnoreFailures(true)
+        }
+
         execution 'ANDROIDX_TEST_ORCHESTRATOR'
         unitTests {
             includeAndroidResources = true

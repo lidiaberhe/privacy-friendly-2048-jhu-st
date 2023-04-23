@@ -333,29 +333,29 @@ public class GameActivityTest {
         }
     }
 
-//    @Test(expected = NullPointerException.class) // writes to file
-//    public void saveStateToFileNullState() {
-//        int n = 2;
-//        String filename = "stateFile.txt";
-//
-//        Intent intent = new Intent();
-//        intent.putExtra("n", n);
-//        intent.putExtra("filename", filename);
-//
-//        try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class, intent)) {
-//            controller.setup();
-//            GameActivity activity = controller.get();
-//
-//            activity.initializeState();
-//            activity.saveStateToFile(null);
-//
-//            File file = new File(activity.getFilesDir(), filename);
-//            assertTrue(file.exists());
-//
-//            activity.getFilesDir().delete();
-//
-//        }
-//    }
+    @Test(expected = NullPointerException.class) // writes to file
+    public void saveStateToFileNullState() {
+        int n = 2;
+        String filename = "stateFile.txt";
+
+        Intent intent = new Intent();
+        intent.putExtra("n", n);
+        intent.putExtra("filename", filename);
+
+        try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class, intent)) {
+            controller.setup();
+            GameActivity activity = controller.get();
+
+            activity.initializeState();
+            activity.saveStateToFile(null);
+
+            File file = new File(activity.getFilesDir(), filename);
+            assertTrue(file.exists());
+
+            activity.getFilesDir().delete();
+
+        }
+    }
 
 
     @Test // calling saveStateToFile on a GameState object then calling readStateFromFile should return same object
@@ -386,28 +386,28 @@ public class GameActivityTest {
         }
     }
 
-//    @Test // reading file with null object should not crash game
-//    public void integrationTestOnSaveStateToFileAndReadStateFromFileWithNullState() {
-//        int n = 2;
-//        String filename = "stateFile.txt";
-//
-//        Intent intent = new Intent();
-//        intent.putExtra("n", n);
-//        intent.putExtra("filename", filename);
-//
-//        try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class, intent)) {
-//            controller.setup();
-//            GameActivity activity = (controller.get());
-//            activity.initializeState();
-//
-//            activity.saveStateToFile(null);
-//            GameState ms1 = new GameState(n);
-//            GameState ms2 = activity.readStateFromFile();
-//            assertTrue(compareStates(ms1, ms2));
-//
-//            activity.getFilesDir().delete();
-//        }
-//    }
+    @Test // reading file with null object should not crash game
+    public void integrationTestOnSaveStateToFileAndReadStateFromFileWithNullState() {
+        int n = 2;
+        String filename = "stateFile.txt";
+
+        Intent intent = new Intent();
+        intent.putExtra("n", n);
+        intent.putExtra("filename", filename);
+
+        try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class, intent)) {
+            controller.setup();
+            GameActivity activity = (controller.get());
+            activity.initializeState();
+
+            activity.saveStateToFile(null);
+            GameState ms1 = new GameState(n);
+            GameState ms2 = activity.readStateFromFile();
+            assertTrue(compareStates(ms1, ms2));
+
+            activity.getFilesDir().delete();
+        }
+    }
 
     @Test // deleting a nonexistent state file should return false
     public void deleteStateFileNonexistentFilenameGiven() {
