@@ -161,12 +161,6 @@ public class AppTest {
     Context context = ApplicationProvider.getApplicationContext();
     @Test
     public void testElementSetsTextSize() {
-//        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-//
-//        SharedPreferences.Editor editor = preferences.edit();
-//        editor.putString("pref_color", "2"); //This is just an example, you could also put boolean, long, int or floats
-//        editor.commit();
-
         Element elm = new Element(context);
         assertEquals(elm.textSize, elm.getTextSize(), 0.0);
 //        assertEquals(context.getResources().getDrawable(R.drawable.game_brick), elm.getBackground());
@@ -211,18 +205,24 @@ public class AppTest {
         assertEquals(ContextCompat.getColor(context,R.color.black), elm.getCurrentTextColor());
     }
 
-    public void pref1ColorWhite(Element elm) {
+    private void pref1ColorWhite(Element elm) {
         elm.drawItem();
         assertEquals(View.VISIBLE, elm.getVisibility());
         assertEquals("" + elm.getNumber(), elm.getText());
         assertEquals(ContextCompat.getColor(context,R.color.white), elm.getCurrentTextColor());
     }
 
-    public void pref1ColorBlack(Element elm) {
+    private void pref1ColorBlack(Element elm) {
         elm.drawItem();
         assertEquals(View.VISIBLE, elm.getVisibility());
         assertEquals("" + elm.getNumber(), elm.getText());
         assertEquals(ContextCompat.getColor(context,R.color.black), elm.getCurrentTextColor());
+    }
+
+    private void setDefaultPreferenceTo2() {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putString("pref_color", "2"); // change preference value
+        editor.commit();
     }
 
     @Test
@@ -331,6 +331,159 @@ public class AppTest {
 
     @Test
     public void testElementDrawItemNumber32768() {
+        Element elm = new Element(context);
+        elm.setNumber(32768);
+        float size = elm.getTextSize();
+        pref1ColorWhite(elm);
+        assertTrue(size != elm.getTextSize());
+    }
+
+    @Test
+    public void testElementDrawItemPref2Number0() {
+        setDefaultPreferenceTo2();
+
+        Element elm = new Element(context);
+        elm.drawItem();
+        assertEquals(View.INVISIBLE, elm.getVisibility());
+        assertEquals("", elm.getText());
+        assertEquals(ContextCompat.getColor(context,R.color.black), elm.getCurrentTextColor());
+    }
+
+    @Test
+    public void testElementDrawItemPref2Number2() {
+        setDefaultPreferenceTo2();
+
+        Element elm = new Element(context);
+        elm.setNumber(2);
+        elm.drawItem();
+        assertEquals(View.VISIBLE, elm.getVisibility());
+        assertEquals("" + elm.getNumber(), elm.getText());
+        assertEquals(ContextCompat.getColor(context,R.color.black), elm.getCurrentTextColor());
+    }
+
+    @Test
+    public void testElementDrawItemPref2Number4() {
+        setDefaultPreferenceTo2();
+
+        Element elm = new Element(context);
+        elm.setNumber(4);
+        pref1ColorBlack(elm);
+    }
+
+    @Test
+    public void testElementDrawItemPref2Number8() {
+        setDefaultPreferenceTo2();
+
+        Element elm = new Element(context);
+        elm.setNumber(8);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItemPref2Number16() {
+        setDefaultPreferenceTo2();
+
+        Element elm = new Element(context);
+        elm.setNumber(16);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItemPref2Number32() {
+        setDefaultPreferenceTo2();
+
+        Element elm = new Element(context);
+        elm.setNumber(32);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItemPref2Number64() {
+        setDefaultPreferenceTo2();
+
+        Element elm = new Element(context);
+        elm.setNumber(64);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItemPref2Number128() {
+        setDefaultPreferenceTo2();
+
+        Element elm = new Element(context);
+        elm.setNumber(128);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItemPref2Number256() {
+        setDefaultPreferenceTo2();
+
+        Element elm = new Element(context);
+        elm.setNumber(256);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItemPref2Number512() {
+        setDefaultPreferenceTo2();
+
+        Element elm = new Element(context);
+        elm.setNumber(512);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItemPref2Number1024() {
+        setDefaultPreferenceTo2();
+
+        Element elm = new Element(context);
+        elm.setNumber(1024);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItemPref2Number2048() {
+        setDefaultPreferenceTo2();
+
+        Element elm = new Element(context);
+        elm.setNumber(2048);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItemPref2Number4096() {
+        setDefaultPreferenceTo2();
+
+        Element elm = new Element(context);
+        elm.setNumber(4096);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItemPref2Number8192() {
+        setDefaultPreferenceTo2();
+
+        Element elm = new Element(context);
+        elm.setNumber(8192);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItePref2mNumber16384() {
+        setDefaultPreferenceTo2();
+
+        Element elm = new Element(context);
+        elm.setNumber(16384);
+        float size = elm.getTextSize();
+        pref1ColorWhite(elm);
+        assertTrue(size != elm.getTextSize());
+    }
+
+    @Test
+    public void testElementDrawItemPref2Number32768() {
+        setDefaultPreferenceTo2();
+
         Element elm = new Element(context);
         elm.setNumber(32768);
         float size = elm.getTextSize();
