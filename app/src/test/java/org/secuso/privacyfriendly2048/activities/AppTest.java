@@ -24,6 +24,16 @@ import org.secuso.privacyfriendly2048.helpers.FirstLaunchManager;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.ShapeDrawable;
+import android.icu.util.ValueIterator;
+import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
+import android.view.View;
+import android.view.ViewGroup;
 
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
@@ -31,8 +41,12 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.util.Arrays;
+import java.util.Objects;
 
 @RunWith(RobolectricTestRunner.class)
 public class AppTest {
@@ -48,6 +62,283 @@ public class AppTest {
     private boolean compareStates(GameState gs1, GameState gs2) {
         return gs1.toString().equals(gs2.toString());
     }
+
+    private boolean compareElements(Element elm1, Element elm2) {
+        return elm1.getNumber() == elm2.getNumber() &&
+                elm1.getdPosX() == elm2.getdPosX() &&
+                elm1.getdPosY() == elm2.getdPosY();
+    }
+
+    /*
+    GameStatistics Test
+     */
+
+    private final GameStatistics stats = new GameStatistics(2);
+
+    @Test
+    public void testSetRecordMinValue() {
+        stats.setRecord(Long.MIN_VALUE);
+        assertTrue(stats.getRecord() >=0);
+    }
+
+    @Test
+    public void setHighestNumberMinLong() {
+        long high = stats.getHighestNumber();
+        stats.setHighestNumber(Long.MIN_VALUE);
+        assertEquals(high, stats.getHighestNumber());
+    }
+
+    @Test
+    public void setHighestNumberMaxLong() {
+        stats.setHighestNumber(Long.MAX_VALUE);
+        assertEquals(Long.MAX_VALUE, stats.getHighestNumber());
+    }
+
+    @Test
+    public void setHighestNumberEqual() {
+        stats.setHighestNumber(2L);
+        assertEquals(2L, stats.getHighestNumber());
+    }
+
+    @Test // how does it handle when time played exceeds MAX_VALUE
+    public void addTimePlayedExceedMaxLong() {
+        stats.addTimePlayed(10L);
+        assertEquals(10L, stats.getTimePlayed());
+        stats.addTimePlayed(Long.MAX_VALUE);
+        assertTrue(stats.getTimePlayed() >= 0);
+    }
+
+    @Test // how does it handle getting a negative value
+    public void addTimePlayedMinLong() {
+        stats.addTimePlayed(Long.MIN_VALUE);
+        assertTrue(stats.getTimePlayed() >= 0);
+    }
+
+    @Test
+    public void addTimePlayedAddsValues() {
+        stats.addTimePlayed(10L);
+        stats.addTimePlayed(34L);
+        assertEquals(44L, stats.getTimePlayed());
+    }
+
+
+    /*
+    GameState Tests
+     */
+
+    private final GameState state = new GameState(2);
+
+    @Test
+    public void testGetNumberReturnsValidValue() {
+        state.numbers = new int[] {1,2,3,4};
+        assertEquals(2, state.getNumber(0,1));
+
+    }
+
+    @Test // when array out of bounds returns 0
+    public void testGetNumberReturnsExceptionReturns0() {
+        state.numbers = new int[] {1,2,3,4};
+        assertEquals(0, state.getNumber(0,4));
+    }
+
+    @Test
+    public void testGetLastNumberReturnsValidValue() {
+        state.last_numbers = new int[] {1,2,3,4};
+        assertEquals(2, state.getLastNumber(0,1));
+
+    }
+
+    @Test // when array out of bounds returns 0
+    public void testGetLastNumberReturnsExceptionReturns0() {
+        state.last_numbers = new int[] {1,2,3,4};
+        assertEquals(0, state.getNumber(0,4));
+    }
+
+    /*
+    Element Tests
+     */
+
+    Context context = ApplicationProvider.getApplicationContext();
+    @Test
+    public void testElementSetsTextSize() {
+//        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+//
+//        SharedPreferences.Editor editor = preferences.edit();
+//        editor.putString("pref_color", "2"); //This is just an example, you could also put boolean, long, int or floats
+//        editor.commit();
+
+        Element elm = new Element(context);
+        assertEquals(elm.textSize, elm.getTextSize(), 0.0);
+//        assertEquals(context.getResources().getDrawable(R.drawable.game_brick), elm.getBackground());
+    }
+
+    @Test
+    public void testElementCopyEquals() {
+        Element elm = new Element(context);
+        elm.setNumber(5);
+        elm.setDPosition(2,5);
+        elm.setLayoutParams(new ViewGroup.LayoutParams(10, 10));
+        Element elm2 = elm.copy();
+
+        assertTrue(compareElements(elm, elm2));
+    }
+
+    @Test
+    public void testUpdateFontSizeUpdates() {
+        Element elm = new Element(context);
+        elm.setLayoutParams(new ViewGroup.LayoutParams(14, 14));
+        float size = elm.getTextSize();
+        elm.updateFontSize();
+        assertTrue(size != elm.getTextSize());
+    }
+
+    @Test
+    public void testElementDrawItemNumber0() {
+        Element elm = new Element(context);
+        elm.drawItem();
+        assertEquals(View.INVISIBLE, elm.getVisibility());
+        assertEquals("", elm.getText());
+        assertEquals(ContextCompat.getColor(context,R.color.black), elm.getCurrentTextColor());
+    }
+
+    @Test
+    public void testElementDrawItemNumber1() {
+        Element elm = new Element(context);
+        elm.setNumber(2);
+        elm.drawItem();
+        assertEquals(View.VISIBLE, elm.getVisibility());
+        assertEquals("" + elm.getNumber(), elm.getText());
+        assertEquals(ContextCompat.getColor(context,R.color.black), elm.getCurrentTextColor());
+    }
+
+    public void pref1ColorWhite(Element elm) {
+        elm.drawItem();
+        assertEquals(View.VISIBLE, elm.getVisibility());
+        assertEquals("" + elm.getNumber(), elm.getText());
+        assertEquals(ContextCompat.getColor(context,R.color.white), elm.getCurrentTextColor());
+    }
+
+    public void pref1ColorBlack(Element elm) {
+        elm.drawItem();
+        assertEquals(View.VISIBLE, elm.getVisibility());
+        assertEquals("" + elm.getNumber(), elm.getText());
+        assertEquals(ContextCompat.getColor(context,R.color.black), elm.getCurrentTextColor());
+    }
+
+    @Test
+    public void testElementDrawItemNumber4() {
+        Element elm = new Element(context);
+        elm.setNumber(4);
+        pref1ColorBlack(elm);
+//        int color = 0;
+//        Drawable background = elm.getBackground();
+//        if (background instanceof ShapeDrawable) {
+//            color = ((ShapeDrawable)background).getPaint().getColor();
+//        } else if (background instanceof GradientDrawable) {
+//            color = Objects.requireNonNull(((GradientDrawable) background).getColor().getColorForState(elm.getDrawableState(), elm.getDrawingCacheBackgroundColor()));
+//        } else if (background instanceof ColorDrawable) {
+//            color = ((ColorDrawable)background).getColor();
+//        }
+//
+//        assertEquals(color, ContextCompat.getColor(context, R.color.button_empty));
+    }
+
+    @Test
+    public void testElementDrawItemNumber8() {
+        Element elm = new Element(context);
+        elm.setNumber(8);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItemNumber16() {
+        Element elm = new Element(context);
+        elm.setNumber(16);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItemNumber32() {
+        Element elm = new Element(context);
+        elm.setNumber(32);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItemNumber64() {
+        Element elm = new Element(context);
+        elm.setNumber(64);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItemNumber128() {
+        Element elm = new Element(context);
+        elm.setNumber(128);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItemNumber256() {
+        Element elm = new Element(context);
+        elm.setNumber(256);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItemNumber512() {
+        Element elm = new Element(context);
+        elm.setNumber(512);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItemNumber1024() {
+        Element elm = new Element(context);
+        elm.setNumber(1024);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItemNumber2048() {
+        Element elm = new Element(context);
+        elm.setNumber(2048);
+        pref1ColorWhite(elm);
+    }
+
+    @Test
+    public void testElementDrawItemNumber4096() {
+        Element elm = new Element(context);
+        elm.setNumber(4096);
+        pref1ColorBlack(elm);
+    }
+
+    @Test
+    public void testElementDrawItemNumber8192() {
+        Element elm = new Element(context);
+        elm.setNumber(8192);
+        pref1ColorBlack(elm);
+    }
+
+    @Test
+    public void testElementDrawItemNumber16384() {
+        Element elm = new Element(context);
+        elm.setNumber(16384);
+        float size = elm.getTextSize();
+        pref1ColorWhite(elm);
+        assertTrue(size != elm.getTextSize());
+    }
+
+    @Test
+    public void testElementDrawItemNumber32768() {
+        Element elm = new Element(context);
+        elm.setNumber(32768);
+        float size = elm.getTextSize();
+        pref1ColorWhite(elm);
+        assertTrue(size != elm.getTextSize());
+    }
+
+
 
     /*
     GameActivity Tests
@@ -615,10 +906,9 @@ public class AppTest {
             MainActivity activity = controller.get();
 
             activity.updateMovingButtons(0);
-            assertEquals(4, activity.findViewById(R.id.btn_prev).getVisibility());
-            assertEquals(0, activity.findViewById(R.id.btn_next).getVisibility());
+            assertEquals(View.INVISIBLE, activity.findViewById(R.id.btn_prev).getVisibility());
+            assertEquals(View.VISIBLE, activity.findViewById(R.id.btn_next).getVisibility());
         }
-
     }
 
     @Test
@@ -628,8 +918,8 @@ public class AppTest {
             MainActivity activity = controller.get();
 
             activity.updateMovingButtons(3);
-            assertEquals(0, activity.findViewById(R.id.btn_prev).getVisibility());
-            assertEquals(4, activity.findViewById(R.id.btn_next).getVisibility());
+            assertEquals(View.VISIBLE, activity.findViewById(R.id.btn_prev).getVisibility());
+            assertEquals(View.INVISIBLE, activity.findViewById(R.id.btn_next).getVisibility());
         }
 
     }
@@ -641,8 +931,8 @@ public class AppTest {
             MainActivity activity = controller.get();
 
             activity.updateMovingButtons(1);
-            assertEquals(0, activity.findViewById(R.id.btn_prev).getVisibility());
-            assertEquals(0, activity.findViewById(R.id.btn_next).getVisibility());
+            assertEquals(View.VISIBLE, activity.findViewById(R.id.btn_prev).getVisibility());
+            assertEquals(View.VISIBLE, activity.findViewById(R.id.btn_next).getVisibility());
         }
 
     }
@@ -765,7 +1055,7 @@ public class AppTest {
     }
 
     @Test // calling readStatisticsFromFile in Statistics.MyViewPagerAdapter when theres is file to load returns that stats object
-    public void testReadStatsFromFilePagerExistentFile() {
+    public void testReadStatsFromFilePagerEmptyFile() {
         try (ActivityController<StatsActivity> controller = Robolectric.buildActivity(StatsActivity.class)) {
             controller.setup();
             StatsActivity activity = controller.get();
@@ -781,63 +1071,104 @@ public class AppTest {
 
         }
     }
-//
-//    @Test // calling saveStatisticsToFile in gameActivity and then readStatisticsFromFile in Statistics.MyViewPagerAdapter when theres is file to load returns that stats object
-//    public void testReadStatsFromFileIntegrationWithSaveStatisticsFromFileValidObject() {
-//        int n = 2;
-//
-//        GameStatistics gs1 = new GameStatistics(n);
-//        gs1.setHighestNumber(100);
-//        gs1.setRecord(500);
-//
-//        try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class)) {
-//            controller.setup();
-//            GameActivity activity = (controller.get());
-//            activity.initializeState();
-//
-//            activity.saveStatisticsToFile(gs1);
-//            File file = new File (activity.getFilesDir(), gs1.getFilename());
-//            assertTrue(file.exists());
-//        }
-//
-//        try (ActivityController<StatsActivity> controller = Robolectric.buildActivity(StatsActivity.class)) {
-//            controller.setup();
-//            StatsActivity activity = controller.get();
-//
-//            GameStatistics gs2 = activity.mSectionsPagerAdapter.readStatisticsFromFile(n);
-//
-//            assertTrue(compareStatistics(gs1, gs2));
-//        }
-//    }
 
-//    @Test // calling saveStatisticsToFile in gameActivity to save null object and then readStatisticsFromFile in Statistics.MyViewPagerAdapter when theres is file to load returns that stats object
-//    public void testReadStatsFromFileIntegrationWithSaveStatisticsFromFileNullObject() {
-//        int n = 2;
-//
-//        GameStatistics gs1 = new GameStatistics(n);
-//        gs1.setHighestNumber(100);
-//        gs1.setRecord(500);
-//
-//        try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class)) {
-//            controller.setup();
-//            GameActivity activity = (controller.get());
-//            activity.initializeState();
-//
-//            activity.saveStatisticsToFile(gs1);
-//            File file = new File (activity.getFilesDir(), gs1.getFilename());
-//            assertTrue(file.exists());
-//        }
-//
-//        try (ActivityController<StatsActivity> controller = Robolectric.buildActivity(StatsActivity.class)) {
-//            controller.setup();
-//            StatsActivity activity = controller.get();
-//
-//            GameStatistics gs2 = activity.mSectionsPagerAdapter.readStatisticsFromFile(n);
-//
-//            assertTrue(compareStatistics(gs1, gs2));
-//        }
-//    }
+    @Test // saving GameStatistics object to file and then calling readStatisticsFromFile in Statistics.MyViewPagerAdapter should return stats object
+    public void testReadStatsFromFileValidObject() {
+        int n = 2;
+
+        GameStatistics gs1 = new GameStatistics(n);
+        gs1.setHighestNumber(100);
+        gs1.setRecord(500);
+
+        try (ActivityController<StatsActivity> controller = Robolectric.buildActivity(StatsActivity.class)) {
+            controller.setup();
+            StatsActivity activity = controller.get();
+
+            File file = new File (activity.getFilesDir(), gs1.getFilename());
+            FileOutputStream fileOut = new FileOutputStream(file);
+            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            out.writeObject(gs1);
+            out.close();
+            fileOut.close();
+
+            GameStatistics gs2 = activity.mSectionsPagerAdapter.readStatisticsFromFile(n);
+
+            assertTrue(compareStatistics(gs1, gs2));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test // saving null object to file and then readStatisticsFromFile in Statistics.MyViewPagerAdapter should not return null object
+    public void testReadStatsFromFileFromFileNullObject() {
+        int n = 2;
+
+        try (ActivityController<StatsActivity> controller = Robolectric.buildActivity(StatsActivity.class)) {
+            controller.setup();
+            StatsActivity activity = controller.get();
+
+            GameStatistics gs1 = new GameStatistics(n);
+            File file = new File (activity.getFilesDir(), "statistics"+n+".txt");
+            FileOutputStream fileOut = new FileOutputStream(file);
+            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            out.writeObject(null);
+            out.close();
+            fileOut.close();
+
+            GameStatistics gs2 = activity.mSectionsPagerAdapter.readStatisticsFromFile(n);
+            assertTrue(compareStatistics(gs1, gs2));
+        } catch (IOException e) {
+//            throw new RuntimeException(e);
+        }
+    }
+
+    @Test // saving GmeState object to file and then calling readStatisticsFromFile in Statistics.MyViewPagerAdapter should return stats object
+    public void testReadStatsFromFileStatsActivityOnFileWithGameStateObject() {
+        int n = 2;
+
+        try (ActivityController<StatsActivity> controller = Robolectric.buildActivity(StatsActivity.class)) {
+            controller.setup();
+            StatsActivity activity = controller.get();
+
+            GameStatistics gs1 = new GameStatistics(n);
+            File file = new File (activity.getFilesDir(), "statistics"+n+".txt");
+            FileOutputStream fileOut = new FileOutputStream(file);
+            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            out.writeObject(new GameState(2));
+            out.close();
+            fileOut.close();
+
+            GameStatistics gs2 = activity.mSectionsPagerAdapter.readStatisticsFromFile(n);
+            assertTrue(compareStatistics(gs1, gs2));
+        } catch (IOException e) {
+//            throw new RuntimeException(e);
+        }
+    }
+
+    @Test // saving corrupted file and then calling readStatisticsFromFile in Statistics.MyViewPagerAdapter should return stats object
+    public void testReadStatsFromFileStatsActivityOnCorruptedFile() {
+        int n = 2;
+
+        try (ActivityController<StatsActivity> controller = Robolectric.buildActivity(StatsActivity.class)) {
+            controller.setup();
+            StatsActivity activity = controller.get();
+
+            GameStatistics gs1 = new GameStatistics(n);
+            File file = new File (activity.getFilesDir(), "statistics"+n+".txt");
+            file.createNewFile();
+
+            String str = "jbnfij\rnokdm \nduji";
+            FileOutputStream outputStream = new FileOutputStream(file.getAbsolutePath());
+            byte[] strToBytes = str.getBytes();
+            outputStream.write(strToBytes);
+            outputStream.close();
 
 
+            GameStatistics gs2 = activity.mSectionsPagerAdapter.readStatisticsFromFile(n);
+            assertTrue(compareStatistics(gs1, gs2));
+        } catch (IOException e) {
+//            throw new RuntimeException(e);
+        }
+    }
 
 }
