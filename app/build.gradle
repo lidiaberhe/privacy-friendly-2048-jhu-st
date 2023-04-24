@@ -107,13 +107,14 @@ dependencies {
 
     // Mockito framework
     testImplementation "org.mockito:mockito-core:3+"
+    androidTestImplementation "org.mockito:mockito-core:5.3.1"
+    androidTestImplementation "org.mockito:mockito-android:5.3.1"
 
     // UI testing with Espresso
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
     androidTestImplementation 'androidx.test.espresso:espresso-intents:3.4.0'
     androidTestImplementation 'androidx.test:runner:1.4.0'
     androidTestImplementation 'androidx.test:rules:1.4.0'
-
 
     androidTestImplementation "androidx.test.ext:junit:1.1.5"
     androidTestImplementation "androidx.test.ext:truth:1.5.0"

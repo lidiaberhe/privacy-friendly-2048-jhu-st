@@ -14,11 +14,12 @@ import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.not;
 
 import android.app.Application;
+import android.content.Intent;
 import android.test.ApplicationTestCase;
 
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.espresso.intent.Intents;
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
-import androidx.test.runner.AndroidJUnit4;
+import androidx.test.rule.ActivityTestRule;
 
 import org.junit.After;
 import org.junit.Before;
@@ -35,8 +36,16 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
         super(Application.class);
     }
 
-    @Rule public ActivityScenarioRule<SplashActivity> activityScenarioRule
-            = new ActivityScenarioRule<>(SplashActivity.class);
+//    @Rule public ActivityScenarioRule<TutorialActivity> activityScenarioRule
+//            = new ActivityScenarioRule<TutorialActivity>(TutorialActivity.class, true, false);
+
+    // this is used to delay starting the activity until ready
+    @Rule
+    public ActivityTestRule<SplashActivity> activityRule
+            = new ActivityTestRule<>(
+        SplashActivity.class,
+            false,
+            false);
 
     @Before
     public void setup() {
@@ -46,10 +55,23 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
     @After
     public void teardown() {
         Intents.release();
+//        ((ActivityManager) Objects.requireNonNull(ApplicationProvider.getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE))).clearApplicationUserData();
+//        Runtime runtime = Runtime.getRuntime();
+//        runtime.exec("pm clear org.secuso.privacyfriendly2048");
+    }
+
+    private void startSplashActivity() {
+        Intent mainIntent = new Intent(ApplicationProvider.getApplicationContext(),
+                SplashActivity.class);
+
+        activityRule.launchActivity(mainIntent);
     }
 
     @Test
     public void testTutorialSkipLaunchesMainActivity() {
+
+        startSplashActivity();
+
         // press skip button
         onView(withId(R.id.btn_skip)).perform(click());
 
@@ -64,6 +86,8 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 
     @Test
     public void testTutorialNextGoesToNextPage() {
+        startSplashActivity();
+
         // sanity check, make sure current image being displayed is the first tutorial image
         onView(withId(R.id.image1))
                 .check(matches(isCompletelyDisplayed()));
@@ -97,6 +121,8 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 
     @Test
     public void testTutorialFinishingTutorialChangesNextButtonText() {
+        startSplashActivity();
+
         // there are three pages of tutorial before the last one,
         // so click "next" three times
         onView(withId(R.id.btn_next))
@@ -110,6 +136,8 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 
     @Test
     public void testTutorialFinishingTutorialMakesSkipButtonInvisible() {
+        startSplashActivity();
+
         // there are three pages of tutorial before the last one,
         // so click "next" three times
         onView(withId(R.id.btn_next))
@@ -123,6 +151,8 @@ public class ApplicationTest extends ApplicationTestCase<Application> {
 
     @Test
     public void testTutorialFinishingTutorialLaunchesMainActivity() {
+        startSplashActivity();
+
         // there are three pages of tutorial before the last one,
         // so click "next" three times
         onView(withId(R.id.btn_next))
