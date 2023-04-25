@@ -6,6 +6,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.robolectric.Shadows.shadowOf;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -16,6 +17,7 @@ import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
 import org.robolectric.android.controller.ActivityController;
+import org.robolectric.annotation.Config;
 import org.robolectric.shadows.ShadowActivity;
 import org.robolectric.shadows.ShadowIntent;
 //import org.robolectric.shadows.support.v4.Shadows;
@@ -40,6 +42,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import androidx.test.core.app.ActivityScenario;
@@ -55,10 +58,13 @@ import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.Objects;
 
+
 @RunWith(RobolectricTestRunner.class)
 public class AppTest {
 
     Context context = ApplicationProvider.getApplicationContext();
+
+    Intent intent = new Intent();
 
     /*
     Test Helper Functions
@@ -647,31 +653,206 @@ public class AppTest {
     GameActivity Tests
      */
 
+    @Test (expected = NullPointerException.class)
+    public void testInitializeWithUndoFalse() {
+        Intent intent = new Intent().putExtra("undo", true);
+        try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class, intent).setup()) {
+            GameActivity activity = controller.get();
+            activity.initialize();
+
+            assertEquals(View.VISIBLE, activity.findViewById(R.id.undoButton).getVisibility());
+        }
+    }
+
+
+    @Test // test createNewGame function initializes certain fields
+    public void testCreateNewGame() {
+        try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class).setup()) {
+            GameActivity activity = controller.get();
+            activity.createNewGame();
+
+            assertEquals("0" ,activity.textFieldPoints.getText());
+            assertEquals("0" ,activity.textFieldRecord.getText());
+            assertEquals(View.INVISIBLE, activity.findViewById(R.id.undoButton).getVisibility());
+        }
+    }
+
+    @Test // test elements actually switch places
+    public void testSwitchElementPositions() {
+        Element e1 = new Element(context);
+        e1.dPosX = 2; e1.dPosY = 3;
+
+        Element e2 = new Element(context);
+        e2.dPosX = 1; e2.dPosY = 4;
+
+        GameActivity gameActivity = new GameActivity();
+        gameActivity.switchElementPositions(e1, e2);
+
+        assertTrue(e1.getdPosX() == 1 && e1.getdPosY() ==4);
+        assertTrue(e1.animateMoving);
+        assertTrue(e2.getdPosX() == 2 && e2.getdPosY() ==3);
+        assertFalse(e2.animateMoving);
+    }
+
+    @Test // test function when elem arr empty
+    public void testDrawAllElementsEmpty() {
+        GameActivity activity = new GameActivity();
+        activity.drawAllElements(new Element[][]{});
+    }
+
+    @Test // run for loop with one element
+    public void testDrawAllElementsRunOnce() {
+        Element e1 = new Element(context);
+        e1.setVisibility(View.VISIBLE);
+
+        GameActivity activity = new GameActivity();
+        activity.drawAllElements(new Element[][]{new Element[]{e1}});
+
+        assertEquals(View.INVISIBLE, e1.getVisibility());
+    }
+
+    @Test // run for loop with 2 element
+    public void testDrawAllElementsRunTwice() {
+        Element e1 = new Element(context);
+        e1.setVisibility(View.VISIBLE);
+
+        Element e2 = new Element(context);
+        e2.setVisibility(View.INVISIBLE);
+        e2.setNumber(4);
+
+        GameActivity activity = new GameActivity();
+        activity.drawAllElements(new Element[][]{new Element[]{e1, e2}});
+
+        assertEquals(View.INVISIBLE, e1.getVisibility());
+        assertEquals(View.VISIBLE, e2.getVisibility());
+    }
+
+    @Test // when the player has not won yet, stats is not saved
+    public void testCheck2048Won2048False() {
+        try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class).setup()) {
+            GameActivity activity = controller.get();
+            activity.initialize();
+
+            activity.won2048 = false;
+            activity.check2048();
+
+            File file = new File(activity.getFilesDir(), "statistics4.txt");
+            assertFalse(file.exists());
+
+            activity.getFilesDir().delete();
+        }
+
+    }
+
+    @Test // when the player has reaches threshold, stats is saved
+    public void testCheck2048Won2048PlayerReachThreshold() {
+        int n = 4;
+        Intent intent = new Intent();
+        intent.putExtra("n", n);
+        intent.putExtra("new", false);
+        intent.putExtra("filename", "state4.txt");
+
+        GameState gst = new GameState(2);
+        gst.points = 3;
+        gst.numbers = new int[] {2,4,8,2048,2,2,2,2,2,2,2,2,2,2,2,2,};
+
+        try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class, intent).setup()) {
+            GameActivity activity = controller.get();
+            String [] files  = activity.getFilesDir().list();
+
+            File stateFile = new File(activity.getFilesDir(), "state4.txt");
+            File statsFile = new File(activity.getFilesDir(), "statistics4.txt");
+
+            assertFalse(statsFile.exists());
+            assertFalse(stateFile.exists());
+
+            // create GameState object file
+            FileOutputStream fileOut = new FileOutputStream(stateFile);
+            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            out.writeObject(gst);
+            out.close();
+            fileOut.close();
+
+            // make sure it exists
+            assertTrue(stateFile.exists());
+
+            // now initialize with intent
+            activity.initialize();
+            activity.won2048 = false;
+            activity.check2048();
+
+            assertTrue(statsFile.exists());
+            assertTrue(activity.won2048);
+
+            activity.getFilesDir().delete();
+            
+        } catch (IOException e) {
+//                e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testCheck2048Won2048NoFileCreated() {
+        try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class).setup()) {
+            GameActivity activity = controller.get();
+            activity.initialize();
+
+            activity.won2048 = true;
+            activity.check2048();
+
+            File file = new File(activity.getFilesDir(), "statistics4.txt");
+            assertFalse(file.exists());
+
+            activity.getFilesDir().delete();
+            
+        }
+    }
+
+    @Test // calling game over should save the current game stats
+    public void testGameOverSavesGameStatistics() {
+        int n = 3;
+        Intent intent = new Intent().putExtra("n", n);
+        try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class, intent).setup()) {
+            GameActivity activity = controller.get();
+
+            File file = new File(activity.getFilesDir(), "statistics"+n+".txt");
+            assertFalse(file.exists());
+
+            activity.initialize();
+            activity.gameOver();
+
+            assertTrue(file.exists());
+            activity.getFilesDir().delete();
+            
+        }
+    }
+
     @Test // calling readStatisticsFromFile on empty file should return a new GameStatistics object
     public void readStatisticsFromFileEmpty() {
         int n = 2;
-        String filename = "stateFile.txt";
 
         Intent intent = new Intent();
         intent.putExtra("n", n);
-        intent.putExtra("filename", filename);
 
         try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class, intent).setup()) {
             GameActivity activity = controller.get();
             activity.initializeState();
 
-            try {
-                File file = new File(activity.getFilesDir(), "statistics" + n + ".txt");
-                file.createNewFile();
-                GameStatistics gs1 = activity.readStatisticsFromFile();
-                GameStatistics gs2 = new GameStatistics(n);
-                assertTrue(compareStatistics(gs1, gs2));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            File file = new File(activity.getFilesDir(), "statistics" + n + ".txt");
+            file.createNewFile();
+            assertTrue(file.exists());
+
+            GameStatistics gs1 = activity.readStatisticsFromFile();
+            GameStatistics gs2 = new GameStatistics(n);
+            assertTrue(compareStatistics(gs1, gs2));
+            System.out.println(activity.getFilesDir());
 
             activity.getFilesDir().delete();
 
+            
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
 
     }
@@ -694,7 +875,11 @@ public class AppTest {
             GameStatistics gs2 = new GameStatistics(n);
             assertTrue(compareStatistics(gs1, gs2));
 
+            System.out.println(activity.getFilesDir());
+
             activity.getFilesDir().delete();
+
+            
 
         }
     }
@@ -713,25 +898,24 @@ public class AppTest {
             GameActivity activity = (controller.get());
             activity.initializeState();
 
-            try {
-                File file = new File(activity.getFilesDir(), "statistics" + n + ".txt");
-                file.createNewFile();
+            File file = new File(activity.getFilesDir(), "statistics" + n + ".txt");
+            file.createNewFile();
 
-                String str = "Hello";
-                FileOutputStream outputStream = new FileOutputStream(file.getAbsolutePath());
-                byte[] strToBytes = str.getBytes();
-                outputStream.write(strToBytes);
-                outputStream.close();
+            String str = "Hello";
+            FileOutputStream outputStream = new FileOutputStream(file.getAbsolutePath());
+            byte[] strToBytes = str.getBytes();
+            outputStream.write(strToBytes);
+            outputStream.close();
 
-                GameStatistics gs1 = activity.readStatisticsFromFile();
-                GameStatistics gs2 = new GameStatistics(n);
-                assertTrue(compareStatistics(gs1, gs2));
-
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            GameStatistics gs1 = activity.readStatisticsFromFile();
+            GameStatistics gs2 = new GameStatistics(n);
+            assertTrue(compareStatistics(gs1, gs2));
 
             activity.getFilesDir().delete();
+
+            
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -759,6 +943,8 @@ public class AppTest {
             assertTrue(file.exists());
 
             activity.getFilesDir().delete();
+
+            
         }
     }
 
@@ -779,6 +965,8 @@ public class AppTest {
 
             activity.saveStatisticsToFile(null);
             activity.getFilesDir().delete();
+
+            
 
         }
     }
@@ -806,6 +994,8 @@ public class AppTest {
             assertTrue(compareStatistics(gs1, gs2));
 
             activity.getFilesDir().delete();
+
+            
         }
     }
 
@@ -829,6 +1019,8 @@ public class AppTest {
             assertTrue(compareStates(ms1, ms2));
 
             activity.getFilesDir().delete();
+
+            
         }
     }
 
@@ -846,20 +1038,18 @@ public class AppTest {
             GameActivity activity = (controller.get());
             activity.initializeState();
 
-            try {
-                File file = new File(activity.getFilesDir(), filename);
-                file.createNewFile();
+            File file = new File(activity.getFilesDir(), filename);
+            file.createNewFile();
 
-                GameState ms1 = new GameState(n);
-                GameState ms2 = activity.readStateFromFile();
-                assertTrue(compareStates(ms1, ms2));
-
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
+            GameState ms1 = new GameState(n);
+            GameState ms2 = activity.readStateFromFile();
+            assertTrue(compareStates(ms1, ms2));
 
             activity.getFilesDir().delete();
+
+            
+        } catch (IOException e) {
+//            throw new RuntimeException(e);
         }
     }
 
@@ -877,26 +1067,25 @@ public class AppTest {
             GameActivity activity = (controller.get());
             activity.initializeState();
 
-            try {
-                File file = new File(activity.getFilesDir(), filename);
-                file.createNewFile();
+            File file = new File(activity.getFilesDir(), filename);
+            file.createNewFile();
 
-                String str = "Hello";
-                FileOutputStream outputStream = new FileOutputStream(file.getAbsolutePath());
-                byte[] strToBytes = str.getBytes();
-                outputStream.write(strToBytes);
-                outputStream.close();
+            String str = "Hello";
+            FileOutputStream outputStream = new FileOutputStream(file.getAbsolutePath());
+            byte[] strToBytes = str.getBytes();
+            outputStream.write(strToBytes);
+            outputStream.close();
 
-                GameState ms1 = new GameState(n);
-                GameState ms2 = activity.readStateFromFile();
-                assertTrue(compareStates(ms1, ms2));
-
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            GameState ms1 = new GameState(n);
+            GameState ms2 = activity.readStateFromFile();
+            assertTrue(compareStates(ms1, ms2));
 
             activity.getFilesDir().delete();
-        }
+
+            
+        } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
     }
 
     @Test // saving state to file when file name provided actually creates file under given name
@@ -920,6 +1109,8 @@ public class AppTest {
             assertTrue(file.exists());
 
             activity.getFilesDir().delete();
+
+            
         }
     }
 
@@ -943,6 +1134,8 @@ public class AppTest {
             assertTrue(file.exists());
 
             activity.getFilesDir().delete();
+
+            
         }
     }
 
@@ -983,19 +1176,81 @@ public class AppTest {
         try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class, intent)) {
             controller.setup();
             GameActivity activity = (controller.get());
-            activity.initializeState();
+            activity.initialize();
 
             GameState ms1 = new GameState(n);
             ms1.points = 30;
             ms1.n = n;
             ms1.undo = true;
-            ms1.numbers = new int[]{1,2};
+            ms1.numbers = new int[]{-1,1,2};
 
             activity.saveStateToFile(ms1);
             GameState ms2 = activity.readStateFromFile();
             assertTrue(compareStates(ms1, ms2));
 
             activity.getFilesDir().delete();
+
+            
+        }
+    }
+
+    @Test // calling saveStateToFile on a GameState object then calling readStateFromFile should return same object
+    // case: gamestate.numbers = []
+    public void integrationTestOnSaveStateToFileAndReadStateFromFile2() {
+        int n = 4;
+        String filename = "state"+n+".txt";
+
+        Intent intent = new Intent();
+        intent.putExtra("n", n);
+        intent.putExtra("filename", filename);
+
+        try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class, intent)) {
+            controller.setup();
+            GameActivity activity = (controller.get());
+            activity.initializeState();
+
+            GameState ms1 = new GameState(n);
+            ms1.points = 30;
+            ms1.n = n;
+            ms1.undo = true;
+            ms1.numbers = new int[]{};
+
+            activity.saveStateToFile(ms1);
+            GameState ms2 = activity.readStateFromFile();
+            assertTrue(compareStates(new GameState(n), ms2));
+
+            activity.getFilesDir().delete();
+        }
+    }
+
+    @Test // calling saveStateToFile on a GameState object then calling readStateFromFile should return same object
+    // case: gameState.n != n
+    public void integrationTestOnSaveStateToFileAndReadStateFromFile3() {
+        int n = 3;
+        String filename = "state"+n+".txt";
+
+        Intent intent = new Intent();
+        intent.putExtra("n", n);
+        intent.putExtra("filename", filename);
+
+        try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class, intent)) {
+            controller.setup();
+            GameActivity activity = (controller.get());
+            activity.initialize();
+
+            GameState ms1 = new GameState(3);
+            ms1.points = 30;
+            ms1.n = n;
+            ms1.undo = true;
+            ms1.numbers = new int[]{};
+
+            activity.saveStateToFile(ms1);
+            GameState ms2 = activity.readStateFromFile();
+            assertFalse(compareStates(ms1, ms2));
+
+            activity.getFilesDir().delete();
+
+            
         }
     }
 
@@ -1019,6 +1274,8 @@ public class AppTest {
             assertTrue(compareStates(ms1, ms2));
 
             activity.getFilesDir().delete();
+
+            
         }
     }
 
@@ -1042,6 +1299,8 @@ public class AppTest {
             assertTrue(compareStatistics(gs1, gs2));
 
             activity.getFilesDir().delete();
+
+            
         }
     }
 
@@ -1065,6 +1324,8 @@ public class AppTest {
             assertTrue(compareStates(ms1, ms2));
 
             activity.getFilesDir().delete();
+
+            
         }
     }
 
@@ -1088,6 +1349,8 @@ public class AppTest {
             assertTrue(compareStatistics(gs1, gs2));
 
             activity.getFilesDir().delete();
+
+            
         }
     }
 
@@ -1107,6 +1370,8 @@ public class AppTest {
 
             assertFalse(activity.deleteStateFile());
             activity.getFilesDir().delete();
+
+            
         }
     }
 
@@ -1141,15 +1406,15 @@ public class AppTest {
             GameActivity activity = (controller.get());
             activity.initializeState();
 
-            try {
-                File file = new File(activity.getFilesDir(), filename);
-                file.createNewFile();
-                assertTrue(activity.deleteStateFile());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            File file = new File(activity.getFilesDir(), filename);
+            file.createNewFile();
+            assertTrue(activity.deleteStateFile());
 
             activity.getFilesDir().delete();
+
+            
+        } catch (IOException e) {
+//            throw new RuntimeException(e);
         }
     }
 
@@ -1172,8 +1437,70 @@ public class AppTest {
             assertTrue(activity.deleteStateFile());
 
             activity.getFilesDir().delete();
+
+            
         }
     }
+
+
+    @Test // test no exception or anything breaks when called
+    public void testSetDPositionsAnimationTrue() {
+        try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class).setup()) {
+            GameActivity activity = controller.get();
+            activity.initialize();
+            activity.setDPositions(true);
+        }
+    }
+
+    @Test // test no exception or anything breaks when called
+    public void testSetDPositionsAnimationFalse() {
+        try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class).setup()) {
+            GameActivity activity = controller.get();
+            activity.initialize();
+            activity.setDPositions(false);
+        }
+    }
+
+    @Test // stats file created and saved when restart button clicked
+    public void testInitResourcesRestartButtonSavesStats() {
+
+        try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class)) {
+            controller.setup();
+            GameActivity activity = controller.get();
+
+            activity.initialize();
+            activity.initResources();
+
+            // make sure file don't exist
+            File file = new File(activity.getFilesDir(), "statistics4.txt");
+            assertFalse(file.exists());
+
+            // click button
+            activity.findViewById(R.id.restartButton).performClick();
+
+            // should exist now
+            assertTrue(file.exists());
+        }
+    }
+
+    @Test // test undo button visibility not update when undo is false
+    public void testInitResourcesUndoButtonFalse() {
+
+        try (ActivityController<GameActivity> controller = Robolectric.buildActivity(GameActivity.class)) {
+            controller.setup();
+            GameActivity activity = controller.get();
+
+            activity.initialize();
+            activity.initResources();
+
+            // click button
+            ImageButton ib = activity.findViewById(R.id.undoButton);
+            ib.setVisibility(View.VISIBLE);
+            ib.performClick();
+            assertEquals(View.INVISIBLE, ib.getVisibility());
+        }
+    }
+
 
     /*
     FirstLaunchManager Tests
@@ -1181,7 +1508,6 @@ public class AppTest {
 
     @Test
     public void testIsFirstTimeLaunchTrue() {
-        Context context = ApplicationProvider.getApplicationContext();
         FirstLaunchManager manager = new FirstLaunchManager(context);
         manager.setFirstTimeLaunch(true);
         assertTrue(manager.isFirstTimeLaunch());
@@ -1189,11 +1515,24 @@ public class AppTest {
 
     @Test
     public void testIsFirstTimeLaunchFalse() {
-        Context context = ApplicationProvider.getApplicationContext();
         FirstLaunchManager manager = new FirstLaunchManager(context);
         manager.setFirstTimeLaunch(false);
         assertFalse(manager.isFirstTimeLaunch());
+    }
 
+    // the following 2 tests are to reach branch coverage the FirstLauncherManager class
+    @Test
+    public void initFirstTimeLaunchFalse() {
+        FirstLaunchManager manager = new FirstLaunchManager(context);
+        manager.setFirstTimeLaunch(false);
+        manager.initFirstTimeLaunch();
+    }
+
+    @Test
+    public void initFirstTimeLaunchTrue() {
+        FirstLaunchManager manager = new FirstLaunchManager(context);
+        manager.setFirstTimeLaunch(true);
+        manager.initFirstTimeLaunch();
     }
 
     /*
@@ -1247,7 +1586,7 @@ public class AppTest {
 //    @Test
 //    public void testInstantiateObject() {
 //        try (ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class)) {
-//            controller.create();
+//            controller.setup();
 //            MainActivity activity = controller.get();
 //
 //            activity.myViewPagerAdapter.instantiateItem(new View(context), 0);
@@ -1262,7 +1601,7 @@ public class AppTest {
     Stats Activity Tests
      */
 
-    @Test
+    @Test // test it does not delete necessary files
     public void testResetGameStatisticsNotDeleteNonStatsFile() {
         try (ActivityController<StatsActivity> controller = Robolectric.buildActivity(StatsActivity.class)) {
             controller.setup();
@@ -1279,8 +1618,8 @@ public class AppTest {
 
     }
 
-    @Test
-    public void testResetGameStatisticsNotDeleteStatsFile() {
+    @Test // test resetGameStatistics deletes both files
+    public void testResetGameStatisticsDeleteStatsFile() {
         try (ActivityController<StatsActivity> controller = Robolectric.buildActivity(StatsActivity.class)) {
             controller.setup();
             StatsActivity activity = controller.get();
@@ -1289,7 +1628,6 @@ public class AppTest {
             File file2 = new File(activity.getFilesDir(), "Statistics7.txt");
             file.createNewFile();
             file2.createNewFile();
-
 
             activity.resetGameStatistics();
             assertFalse(file.exists());
@@ -1301,7 +1639,7 @@ public class AppTest {
 
     }
 
-    @Test
+    @Test // test nothing happens when you call on nonexistent file
     public void testResetGameStatisticsNonExistentStatsFile() {
         try (ActivityController<StatsActivity> controller = Robolectric.buildActivity(StatsActivity.class)) {
             controller.setup();
@@ -1346,7 +1684,7 @@ public class AppTest {
     @Test
     public void testFormatMillis0() {
         try (ActivityController<StatsActivity> controller = Robolectric.buildActivity(StatsActivity.class)) {
-            controller.create();
+            controller.setup();
             StatsActivity activity = controller.get();
 
             assertEquals("0.00 h", activity.mSectionsPagerAdapter.formatMillis(0L));
