@@ -1,5 +1,6 @@
-package org.secuso.privacyfriendly2048.activities;
+package org.secuso.privacyfriendly2048;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -10,6 +11,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InOrder;
+import org.mockito.internal.matchers.ArrayEquals;
 import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.Shadows;
@@ -20,6 +22,10 @@ import org.robolectric.shadows.ShadowIntent;
 import org.secuso.privacyfriendly2048.R;
 import org.secuso.privacyfriendly2048.activities.helper.GameStatistics;
 import org.secuso.privacyfriendly2048.activities.helper.GameState;
+import org.secuso.privacyfriendly2048.activities.Element;
+import org.secuso.privacyfriendly2048.activities.MainActivity;
+import org.secuso.privacyfriendly2048.activities.GameActivity;
+import org.secuso.privacyfriendly2048.activities.StatsActivity;
 import org.secuso.privacyfriendly2048.helpers.FirstLaunchManager;
 
 import android.content.Context;
@@ -34,6 +40,7 @@ import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
@@ -51,6 +58,8 @@ import java.util.Objects;
 @RunWith(RobolectricTestRunner.class)
 public class AppTest {
 
+    Context context = ApplicationProvider.getApplicationContext();
+
     /*
     Test Helper Functions
      */
@@ -67,6 +76,26 @@ public class AppTest {
         return elm1.getNumber() == elm2.getNumber() &&
                 elm1.getdPosX() == elm2.getdPosX() &&
                 elm1.getdPosY() == elm2.getdPosY();
+    }
+
+    private void pref1ColorWhite(Element elm) {
+        elm.drawItem();
+        assertEquals(View.VISIBLE, elm.getVisibility());
+        assertEquals("" + elm.getNumber(), elm.getText());
+        assertEquals(ContextCompat.getColor(context,R.color.white), elm.getCurrentTextColor());
+    }
+
+    private void pref1ColorBlack(Element elm) {
+        elm.drawItem();
+        assertEquals(View.VISIBLE, elm.getVisibility());
+        assertEquals("" + elm.getNumber(), elm.getText());
+        assertEquals(ContextCompat.getColor(context,R.color.black), elm.getCurrentTextColor());
+    }
+
+    private void setDefaultPreferenceTo2() {
+        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
+        editor.putString("pref_color", "2"); // change preference value
+        editor.commit();
     }
 
     /*
@@ -121,6 +150,62 @@ public class AppTest {
         assertEquals(44L, stats.getTimePlayed());
     }
 
+    @Test
+    public void testUndo() {
+        stats.undo();
+        assertEquals(1, stats.getUndo());
+    }
+
+    @Test
+    public void testMoveL() {
+        stats.moveL();
+        assertEquals(1, stats.getMoves_l());
+    }
+
+    @Test
+    public void testMoveR() {
+        stats.moveR();
+        assertEquals(1, stats.getMoves_r());
+    }
+
+    @Test
+    public void testMoveT() {
+        stats.moveT();
+        assertEquals(1, stats.getMoves_t());
+    }
+
+    @Test
+    public void testMoveD() {
+        stats.moveD();
+        assertEquals(1, stats.getMoves_d());
+    }
+
+    @Test // add moves can add 1 move
+    public void testAddMovesOneMove() {
+        stats.addMoves(1);
+        assertEquals(1L, stats.getMoves());
+    }
+
+    @Test // add moves can add 2 move
+    public void testAddMovesTwoMoves() {
+        stats.addMoves(1L);
+        stats.addMoves(32L);
+        assertEquals(33L, stats.getMoves());
+    }
+
+    @Test // add move don't take negative values
+    public void testAddMovesMinValue() {
+        stats.addMoves(Long.MIN_VALUE);
+        assertTrue(stats.getMoves()>=0);
+    }
+
+    @Test // test to see how add moves handle overflow
+    public void testAddMovesExceedsMaxValue() {
+        stats.addMoves(1L);
+        stats.addMoves(Long.MAX_VALUE);
+        assertTrue(stats.getMoves()>=0);
+    }
+
 
     /*
     GameState Tests
@@ -151,19 +236,75 @@ public class AppTest {
     @Test // when array out of bounds returns 0
     public void testGetLastNumberReturnsExceptionReturns0() {
         state.last_numbers = new int[] {1,2,3,4};
-        assertEquals(0, state.getNumber(0,4));
+        assertEquals(0, state.getLastNumber(0,4));
+    }
+
+    @Test // test nothing gets set in constructor when elements are empty
+    public void testGameStateEmptyElements() {
+        GameState gameState = new GameState(new Element[][]{}, new Element[][]{});
+        assertArrayEquals(new int[]{}, gameState.numbers);
+        assertArrayEquals(new int[]{}, gameState.last_numbers);
+        assertEquals(0, gameState.n);
+    }
+
+    @Test
+    public void testGameStateSecondElementArrEmpty() {
+        Element elm = new Element(context);
+        elm.setNumber(2);
+        GameState gameState = new GameState(new Element[][]{new Element[]{elm}}, new Element[][]{});
+        assertArrayEquals(new int[]{2}, gameState.numbers);
+        assertArrayEquals(new int[]{}, gameState.last_numbers);
+        assertEquals(1, gameState.n);
+    }
+
+    @Test // reach branch coverage in first loop
+    public void testGameState1SecondElementArrEmpty() {
+        Element elm = new Element(context); elm.setNumber(2);
+        GameState gameState = new GameState(
+                new Element[][]{new Element[]{elm, elm}}, new Element[][]{});
+//        assertArrayEquals(new int[]{2,2}, gameState.numbers);
+//        assertArrayEquals(new int[]{}, gameState.last_numbers);
+        assertEquals(1, gameState.n);
+    }
+
+    @Test // reach branch coverage in first loop
+    public void testGameStateFistElementArrEmpty() {
+        Element elm = new Element(context); elm.setNumber(2);
+        GameState gameState = new GameState(
+                new Element[][]{}, new Element[][]{new Element[]{elm}});
+        assertArrayEquals(new int[]{}, gameState.numbers);
+        assertArrayEquals(new int[]{2}, gameState.last_numbers);
+        assertEquals(0, gameState.n);
+    }
+
+    @Test // reach branch coverage in first loop
+    public void testGameState2FistElementArrEmpty() {
+        Element elm = new Element(context); elm.setNumber(2);
+        GameState gameState = new GameState(
+                new Element[][]{}, new Element[][]{new Element[]{elm, elm}});
+//        assertArrayEquals(new int[]{}, gameState.numbers);
+//        assertArrayEquals(new int[]{2}, +gameState.last_numbers);
+        assertEquals(0, gameState.n);
     }
 
     /*
     Element Tests
      */
 
-    Context context = ApplicationProvider.getApplicationContext();
+
     @Test
     public void testElementSetsTextSize() {
         Element elm = new Element(context);
         assertEquals(elm.textSize, elm.getTextSize(), 0.0);
 //        assertEquals(context.getResources().getDrawable(R.drawable.game_brick), elm.getBackground());
+    }
+
+    @Test
+    public void testToString() {
+        Element elm = new Element(context);
+        elm.setNumber(4);
+
+        assertEquals("number: 4", elm.toString());
     }
 
     @Test
@@ -186,6 +327,15 @@ public class AppTest {
         assertTrue(size != elm.getTextSize());
     }
 
+    @Test // when element is initially invisible, set it to visible
+    public void testDrawItemInvisibleNumber2 () {
+        Element elm = new Element(context);
+        elm.setVisibility(View.INVISIBLE);
+        elm.setNumber(2);
+        elm.drawItem();
+        assertEquals(View.VISIBLE, elm.getVisibility());
+    }
+
     @Test
     public void testElementDrawItemNumber0() {
         Element elm = new Element(context);
@@ -205,26 +355,6 @@ public class AppTest {
         assertEquals(ContextCompat.getColor(context,R.color.black), elm.getCurrentTextColor());
     }
 
-    private void pref1ColorWhite(Element elm) {
-        elm.drawItem();
-        assertEquals(View.VISIBLE, elm.getVisibility());
-        assertEquals("" + elm.getNumber(), elm.getText());
-        assertEquals(ContextCompat.getColor(context,R.color.white), elm.getCurrentTextColor());
-    }
-
-    private void pref1ColorBlack(Element elm) {
-        elm.drawItem();
-        assertEquals(View.VISIBLE, elm.getVisibility());
-        assertEquals("" + elm.getNumber(), elm.getText());
-        assertEquals(ContextCompat.getColor(context,R.color.black), elm.getCurrentTextColor());
-    }
-
-    private void setDefaultPreferenceTo2() {
-        SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
-        editor.putString("pref_color", "2"); // change preference value
-        editor.commit();
-    }
-
     @Test
     public void testElementDrawItemNumber4() {
         Element elm = new Element(context);
@@ -241,6 +371,15 @@ public class AppTest {
 //        }
 //
 //        assertEquals(color, ContextCompat.getColor(context, R.color.button_empty));
+    }
+
+    @Test // test drawItem when number is negative
+    public void testElementDrawItemNumberNeg() {
+        Element elm = new Element(context);
+        elm.setNumber(-1);
+        int color = elm.getCurrentTextColor();
+        elm.drawItem();
+        assertEquals(color, elm.getCurrentTextColor());
     }
 
     @Test
@@ -336,6 +475,17 @@ public class AppTest {
         float size = elm.getTextSize();
         pref1ColorWhite(elm);
         assertTrue(size != elm.getTextSize());
+    }
+
+    @Test // test drawItem when number is negative and pref is changed
+    public void testElementDrawItemPref2NumberNeg() {
+        setDefaultPreferenceTo2();
+
+        Element elm = new Element(context);
+        elm.setNumber(-1);
+        int color = elm.getCurrentTextColor();
+        elm.drawItem();
+        assertEquals(color, elm.getCurrentTextColor());
     }
 
     @Test
@@ -1091,6 +1241,23 @@ public class AppTest {
     }
 
 
+
+    // MainActivity.MyViewPagerAdapter tests
+
+//    @Test
+//    public void testInstantiateObject() {
+//        try (ActivityController<MainActivity> controller = Robolectric.buildActivity(MainActivity.class)) {
+//            controller.create();
+//            MainActivity activity = controller.get();
+//
+//            activity.myViewPagerAdapter.instantiateItem(new View(context), 0);
+//            ImageView imageView = (ImageView) activity.findViewById(R.id.main_menu_img1);
+//            assertEquals(activity.getResources().getDrawable(R.drawable.layout4x4_s), imageView.getDrawable());
+//        }
+//    }
+
+
+
     /*
     Stats Activity Tests
      */
@@ -1130,6 +1297,17 @@ public class AppTest {
 
         } catch (IOException e) {
 //            throw new RuntimeException(e);
+        }
+
+    }
+
+    @Test
+    public void testResetGameStatisticsNonExistentStatsFile() {
+        try (ActivityController<StatsActivity> controller = Robolectric.buildActivity(StatsActivity.class)) {
+            controller.setup();
+            StatsActivity activity = controller.get();
+
+            activity.resetGameStatistics();
         }
 
     }
