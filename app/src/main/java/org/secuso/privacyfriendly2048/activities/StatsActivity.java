@@ -161,7 +161,7 @@ public class StatsActivity extends BaseActivity {
                 File file = new File(getFilesDir(), "statistics" + n + ".txt");
                 file.delete();
             } catch (Exception e) {
-
+                e.printStackTrace();
             }
         }
         finish();

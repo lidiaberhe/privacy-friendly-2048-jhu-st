@@ -109,7 +109,6 @@ public class Gestures implements View.OnTouchListener {
     public boolean onSwipeBottom() {
         return false;
     }
-
 }
 
 

@@ -1145,7 +1145,7 @@ public class GameActivity extends BaseActivityWithoutNavBar {
                 out.close();
                 fileOut.close();
             } catch (IOException e) {
-//                e.printStackTrace();
+                e.printStackTrace();
             }
     }
 
@@ -1160,7 +1160,7 @@ public class GameActivity extends BaseActivityWithoutNavBar {
         }
         catch(Exception e)
         {
-//            e.printStackTrace();
+            e.printStackTrace();
         }
         return false;
     }
@@ -1191,10 +1191,11 @@ public class GameActivity extends BaseActivityWithoutNavBar {
         catch(Exception e)
         {
             newGame = true;
-//            e.printStackTrace();
+            e.printStackTrace();
         }
         return nS;
     }
+
     public GameStatistics readStatisticsFromFile()
     {
         GameStatistics gS = new GameStatistics(n);
@@ -1208,10 +1209,11 @@ public class GameActivity extends BaseActivityWithoutNavBar {
         }
         catch(Exception e)
         {
-//            e.printStackTrace();
+            e.printStackTrace();
         }
         return gS;
     }
+
     public void saveStatisticsToFile(GameStatistics gS)
     {
         try {
@@ -1222,7 +1224,7 @@ public class GameActivity extends BaseActivityWithoutNavBar {
             out.close();
             fileOut.close();
         } catch (IOException e) {
-//            e.printStackTrace();
+            e.printStackTrace();
         }
     }
 }
