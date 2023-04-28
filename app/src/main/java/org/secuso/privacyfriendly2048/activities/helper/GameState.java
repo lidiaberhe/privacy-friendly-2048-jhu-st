@@ -22,6 +22,8 @@ package org.secuso.privacyfriendly2048.activities.helper;
 
 import android.util.Log;
 
+import com.bumptech.glide.annotation.Excludes;
+
 import org.secuso.privacyfriendly2048.activities.Element;
 
 import java.io.Serializable;
@@ -43,6 +45,7 @@ public class GameState implements Serializable {
     {
         numbers = new int[size*size];
     }
+
     public GameState(int [][] e)
     {
         int length = 1;
@@ -122,8 +125,6 @@ public class GameState implements Serializable {
 
         return 0;
     }
-
-
 
     @Override
     public String toString() {
