@@ -4,7 +4,7 @@ Please find our Jacoco results for the GUI tests in the folder titled Jacoco; th
 To generate coverage results for the unit tests, please read below.
 
 In order to run our tests, especially our GUI tests, you need an emulator set up that runs Android API 27. To do so follow the instructions provided by Android:
-[(https://developer.android.com/studio/run/managing-avds)][Emulator]
+[(https://developer.android.com/studio/run/managing-avds)]
 
 Once you get the emulator up and running, you can run our unit tests and application tests in tandem by navigating to the `build.gradle` file in the app folder (NOT the one in the project folder), then pressing the play button on line 17 beside `task jacocoTestReport`.
 Alternatively, if you would rather run our tests individually, navigate to either the `ApplicationTest` file to run the GUI tests, or the `test` folder for the units tests, that are ran separated by Activity test. After navigating to the desired test suite you would like to run, press the play button next to the line number of the class name, which will run all of the tests in that file.
@@ -12,7 +12,7 @@ Alternatively, if you would rather run our tests individually, navigate to eithe
 If you would like to generate the Jacoco report for yourself to see the coverage report, you must run the tests in tandem from the app `build.gradle` file, with the instructions from above. If you would like to generate the coverage report for the unit tests, right click on the `test` or `unitTest` file then select `run with coverage`.
 
 Additionally, if you find that you have trouble running these deliverables (which shouldn't be the case), or would like to view our github, please pull from the below link!
-[(https://github.com/lidiaberhe/privacy-friendly-2048-jhu-st.git)][GitHub]
+[(https://github.com/lidiaberhe/privacy-friendly-2048-jhu-st.git)]
 
 
 ### ORIGINAL README
