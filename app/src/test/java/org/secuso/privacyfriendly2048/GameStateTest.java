@@ -56,6 +56,12 @@ public class GameStateTest {
         assertEquals(0, state.getLastNumber(0,4));
     }
 
+    /*
+    the following tests are to test the GameState constructor. Note that this
+    constructor has no  documentation and so there is no information on how the states
+    of the inputs should be or what behavior to expect
+     */
+
     @Test // test nothing gets set in constructor when elements are empty
     public void testGameStateEmptyElements() {
         GameState gameState = new GameState(new Element[][]{}, new Element[][]{});
