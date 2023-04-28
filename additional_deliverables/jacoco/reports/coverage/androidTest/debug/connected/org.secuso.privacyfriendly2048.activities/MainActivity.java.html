@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MainActivity.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=0;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">debug</a> &gt; <a href="index.source.html" class="el_package">org.secuso.privacyfriendly2048.activities</a> &gt; <span class="el_source">MainActivity.java</span></div><h1>MainActivity.java</h1><pre class="source lang-java linenums">/*
+ This file is part of Privacy Friendly 2048. This app implements the functions of the
+ game 2048 in a privacy friendly version.
+
+ Privacy Friendly 2048 is free software:
+ you can redistribute it and/or modify it under the terms of the
+ GNU General Public License as published by the Free Software Foundation,
+ either version 3 of the License, or any later version.
+
+ Privacy Friendly App Example is distributed in the hope
+ that it will be useful, but WITHOUT ANY WARRANTY; without even
+ the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ See the GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with Privacy Friendly App Example. If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ */
+
+package org.secuso.privacyfriendly2048.activities;
+
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.os.Build;
+import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.v4.app.TaskStackBuilder;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.text.Html;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
+
+import org.secuso.privacyfriendly2048.R;
+import org.secuso.privacyfriendly2048.activities.helper.BaseActivity;
+import org.secuso.privacyfriendly2048.activities.helper.BaseActivityWithoutNavBar;
+import org.secuso.privacyfriendly2048.helpers.FirstLaunchManager;
+
+import java.io.File;
+
+/**
+ * The MainActivity is the activity from which the game in each mode is started.
+ * Therefore a ViewPager is used to depict pictures of the four mode.
+ * At the bottom of the activity there are two buttons, which start a new game (START NEW GAME) and continue the previous game (CONTINUE GAME).
+ * The CONTINUE GAME button is greyed out and is not selectable, if there is no previous played game available in this mode.
+ *
+ * @author Julian Wadephul and Saskia Jacob
+ * @version 20180910
+ */
+<span class="fc" id="L65">public class MainActivity extends BaseActivity{</span>
+
+    private ViewPager viewPager;
+    private MainActivity.MyViewPagerAdapter myViewPagerAdapter;
+    private LinearLayout dotsLayout;
+    private TextView[] dots;
+    private ImageButton btnPrev, btnNext;
+    private FirstLaunchManager firstLaunchManager;
+<span class="fc" id="L73">    private int currentPage = 0;</span>
+    private SharedPreferences.Editor editor;
+    private SharedPreferences preferences;
+<span class="fc" id="L76">    private String mypref = &quot;myPref&quot;;</span>
+
+<span class="fc" id="L78">    private int[] layouts = new int[]{</span>
+            R.layout.choose_slide1,
+            R.layout.choose_slide2,
+            R.layout.choose_slide3,
+            R.layout.choose_slide4,
+    };
+<span class="fc" id="L84">    private boolean[] gameResumeable = new boolean[]{</span>
+            false,
+            false,
+            false,
+            false
+    };
+    @Override
+    protected void onStart()
+    {
+<span class="fc" id="L93">        super.onStart();</span>
+<span class="fc" id="L94">        preferences =  getApplicationContext().getSharedPreferences(mypref,Context.MODE_PRIVATE);</span>
+<span class="fc" id="L95">        editor =preferences.edit();</span>
+<span class="fc" id="L96">        currentPage =  preferences.getInt(&quot;currentPage&quot;,0);</span>
+<span class="fc" id="L97">        viewPager.setCurrentItem(currentPage);</span>
+<span class="fc" id="L98">        updateButtons(currentPage);</span>
+<span class="fc" id="L99">        updateMovingButtons(currentPage);</span>
+<span class="fc" id="L100">    }</span>
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+<span class="fc" id="L104">        super.onCreate(savedInstanceState);</span>
+<span class="fc" id="L105">        setContentView(R.layout.activity_main);</span>
+
+
+
+<span class="fc" id="L109">        overridePendingTransition(0, 0);</span>
+
+        // Making notification bar transparent
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">        if (Build.VERSION.SDK_INT &gt;= 21) {</span>
+<span class="fc" id="L113">            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);</span>
+        }
+
+<span class="fc" id="L116">        firstLaunchManager = new FirstLaunchManager(this);</span>
+
+<span class="fc" id="L118">        viewPager = (ViewPager) findViewById(R.id.view_pager);</span>
+<span class="fc" id="L119">        dotsLayout = (LinearLayout) findViewById(R.id.layoutDots);</span>
+<span class="fc" id="L120">        btnPrev = (ImageButton) findViewById(R.id.btn_prev);</span>
+<span class="fc" id="L121">        btnNext = (ImageButton) findViewById(R.id.btn_next);</span>
+
+
+
+        //checking resumable
+<span class="fc" id="L126">        File directory = getFilesDir();</span>
+<span class="fc" id="L127">        File [] files = directory.listFiles();</span>
+
+<span class="fc bfc" id="L129" title="All 2 branches covered.">        for(int i = 0; i &lt; files.length;i++)</span>
+        {
+<span class="fc" id="L131">            Log.i(&quot;files&quot;,files[i].getName());</span>
+<span class="fc bfc" id="L132" title="All 2 branches covered.">            for(int j = 0; j &lt; gameResumeable.length;j++)</span>
+            {
+<span class="fc bfc" id="L134" title="All 2 branches covered.">                if(files[i].getName().equals(&quot;state&quot; + (j+4) + &quot;.txt&quot;))</span>
+<span class="fc" id="L135">                    gameResumeable[j] = true;</span>
+            }
+        }
+
+
+        // adding bottom dots
+<span class="fc" id="L141">        addBottomDots(0);</span>
+
+        // making notification bar transparent
+<span class="fc" id="L144">        changeStatusBarColor();</span>
+
+<span class="fc" id="L146">        myViewPagerAdapter = new MainActivity.MyViewPagerAdapter();</span>
+
+<span class="fc" id="L148">        viewPager.setAdapter(myViewPagerAdapter);</span>
+<span class="fc" id="L149">        viewPager.addOnPageChangeListener(viewPagerPageChangeListener);</span>
+
+<span class="fc" id="L151">            btnPrev.setOnClickListener(new View.OnClickListener() {</span>
+                @Override
+                public void onClick(View v) {
+<span class="fc" id="L154">                    int current = getItem(-1);</span>
+<span class="pc bpc" id="L155" title="1 of 2 branches missed.">                    if (current &gt;= 0) {</span>
+                        // move to next screen
+<span class="fc" id="L157">                        viewPager.setCurrentItem(current);</span>
+                    } else {
+                    }
+<span class="fc" id="L160">                }</span>
+            });
+
+<span class="fc" id="L163">            btnNext.setOnClickListener(new View.OnClickListener() {</span>
+                @Override
+                public void onClick(View v) {
+                    // checking for last page
+                    // if last page home screen will be launched
+<span class="fc" id="L168">                    int current = getItem(+1);</span>
+<span class="pc bpc" id="L169" title="1 of 2 branches missed.">                    if (current &lt; layouts.length) {</span>
+                        // move to next screen
+<span class="fc" id="L171">                        viewPager.setCurrentItem(current);</span>
+                    } else {
+                    }
+<span class="fc" id="L174">                }</span>
+            });
+<span class="fc" id="L176">    }</span>
+    private void addListener(Button b1,Button b2,int n)
+    {
+<span class="fc" id="L179">        final int temp = n;</span>
+<span class="fc" id="L180">        b1.setOnClickListener(new View.OnClickListener() {</span>
+            @Override
+            public void onClick(View v) {
+<span class="fc" id="L183">                Intent  intent = new Intent(MainActivity.this, GameActivity.class);</span>
+<span class="fc" id="L184">                intent.putExtra(&quot;n&quot;,temp);</span>
+<span class="fc" id="L185">                intent.putExtra(&quot;points&quot;,0);</span>
+<span class="fc" id="L186">                intent.putExtra(&quot;new&quot;,true);</span>
+<span class="fc" id="L187">                intent.putExtra(&quot;filename&quot;,&quot;state&quot;+temp+&quot;.txt&quot;);</span>
+<span class="fc" id="L188">                intent.putExtra(&quot;undo&quot;,false);</span>
+<span class="fc" id="L189">                createBackStack(intent);</span>
+<span class="fc" id="L190">            }</span>
+        });
+<span class="fc" id="L192">        b2.setOnClickListener(new View.OnClickListener() {</span>
+            @Override
+            public void onClick(View v) {
+<span class="fc" id="L195">                Intent  intent = new Intent(MainActivity.this, GameActivity.class);</span>
+<span class="fc" id="L196">                intent.putExtra(&quot;n&quot;,temp);</span>
+<span class="fc" id="L197">                intent.putExtra(&quot;new&quot;,false);</span>
+<span class="fc" id="L198">                intent.putExtra(&quot;filename&quot;,&quot;state&quot;+temp+&quot;.txt&quot;);</span>
+<span class="fc" id="L199">                intent.putExtra(&quot;undo&quot;,false);</span>
+<span class="fc" id="L200">                createBackStack(intent);</span>
+<span class="fc" id="L201">            }</span>
+        });
+<span class="fc" id="L203">    }</span>
+    private void createBackStack(Intent intent) {
+<span class="pc bpc" id="L205" title="1 of 2 branches missed.">        if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.JELLY_BEAN) {</span>
+<span class="fc" id="L206">            TaskStackBuilder builder = TaskStackBuilder.create(this);</span>
+<span class="fc" id="L207">            builder.addNextIntentWithParentStack(intent);</span>
+<span class="fc" id="L208">            builder.startActivities();</span>
+<span class="fc" id="L209">        } else {</span>
+<span class="nc" id="L210">            startActivity(intent);</span>
+<span class="nc" id="L211">            finish();</span>
+        }
+<span class="fc" id="L213">    }</span>
+    private void addBottomDots(int currentPage) {
+<span class="fc" id="L215">        dots = new TextView[layouts.length];</span>
+
+<span class="fc" id="L217">        int activeColor = ContextCompat.getColor(this, R.color.dot_light_screen);</span>
+<span class="fc" id="L218">        int inactiveColor = ContextCompat.getColor(this, R.color.dot_dark_screen);</span>
+
+<span class="fc" id="L220">        dotsLayout.removeAllViews();</span>
+<span class="fc bfc" id="L221" title="All 2 branches covered.">        for (int i = 0; i &lt; dots.length; i++) {</span>
+<span class="fc" id="L222">            dots[i] = new TextView(this);</span>
+<span class="fc" id="L223">            dots[i].setText(Html.fromHtml(&quot;&amp;#8226;&quot;));</span>
+<span class="fc" id="L224">            dots[i].setTextSize(35);</span>
+<span class="fc" id="L225">            dots[i].setTextColor(inactiveColor);</span>
+<span class="fc" id="L226">            dotsLayout.addView(dots[i]);</span>
+        }
+
+<span class="pc bpc" id="L229" title="1 of 2 branches missed.">        if (dots.length &gt; 0)</span>
+<span class="fc" id="L230">            dots[currentPage].setTextColor(activeColor);</span>
+<span class="fc" id="L231">    }</span>
+    private int getItem(int i) {
+<span class="fc" id="L233">        return viewPager.getCurrentItem() + i;</span>
+    }
+
+    //  viewpager change listener
+<span class="fc" id="L237">    ViewPager.OnPageChangeListener viewPagerPageChangeListener = new ViewPager.OnPageChangeListener() {</span>
+
+        @Override
+        public void onPageSelected(int position) {
+<span class="fc" id="L241">            addBottomDots(position);</span>
+<span class="fc" id="L242">            currentPage = position;</span>
+<span class="fc" id="L243">            editor.putInt(&quot;currentPage&quot;,currentPage);</span>
+<span class="fc" id="L244">            editor.commit();</span>
+<span class="fc" id="L245">            updateButtons(position);</span>
+
+<span class="fc" id="L247">            updateMovingButtons(position);</span>
+<span class="fc" id="L248">        }</span>
+
+        @Override
+        public void onPageScrolled(int arg0, float arg1, int arg2) {
+
+<span class="fc" id="L253">        }</span>
+
+        @Override
+        public void onPageScrollStateChanged(int arg0) {
+
+<span class="fc" id="L258">        }</span>
+    };
+    public void updateMovingButtons(int position)
+    {
+<span class="fc bfc" id="L262" title="All 2 branches covered.">        if (position == layouts.length - 1) {</span>
+            // last page. make button text to GOT IT
+<span class="fc" id="L264">            btnNext.setVisibility(View.INVISIBLE);</span>
+        } else {
+            // still pages are left
+<span class="fc" id="L267">            btnNext.setVisibility(View.VISIBLE);</span>
+        }
+<span class="fc bfc" id="L269" title="All 2 branches covered.">        if (position == 0) {</span>
+            // last page. make button text to GOT IT
+<span class="fc" id="L271">            btnPrev.setVisibility(View.INVISIBLE);</span>
+        } else {
+            // still pages are left
+<span class="fc" id="L274">            btnPrev.setVisibility(View.VISIBLE);</span>
+        }
+<span class="fc" id="L276">    }</span>
+    public void updateButtons (int position)
+    {
+<span class="fc" id="L279">        Button newGameButton = MainActivity.this.findViewById(R.id.button_newGame);</span>
+<span class="fc" id="L280">        Button continueButton = MainActivity.this.findViewById(R.id.button_continueGame);</span>
+        try {
+<span class="fc bfc" id="L282" title="All 2 branches covered.">            if(gameResumeable[position])</span>
+<span class="fc" id="L283">                continueButton.setBackgroundResource(R.drawable.standalone_button);</span>
+            else
+<span class="fc" id="L285">                continueButton.setBackgroundResource(R.drawable.inactive_button);</span>
+
+<span class="fc" id="L287">            continueButton.setEnabled(gameResumeable[position]);</span>
+        }
+<span class="nc" id="L289">        catch(Exception aie)</span>
+        {
+<span class="nc" id="L291">            aie.printStackTrace();</span>
+<span class="fc" id="L292">        }</span>
+<span class="fc" id="L293">        addListener(newGameButton,continueButton,position+4);</span>
+<span class="fc" id="L294">    }</span>
+
+    /**
+     * Making notification bar transparent
+     */
+    private void changeStatusBarColor() {
+<span class="pc bpc" id="L300" title="1 of 2 branches missed.">        if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.LOLLIPOP) {</span>
+<span class="fc" id="L301">            Window window = getWindow();</span>
+<span class="fc" id="L302">            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);</span>
+<span class="fc" id="L303">            window.setStatusBarColor(Color.TRANSPARENT);</span>
+        }
+<span class="fc" id="L305">    }</span>
+
+    /**
+     * View pager adapter
+     */
+    public class MyViewPagerAdapter extends PagerAdapter {
+        private LayoutInflater layoutInflater;
+
+<span class="fc" id="L313">        public MyViewPagerAdapter() {</span>
+<span class="fc" id="L314">        }</span>
+
+        @Override
+        public Object instantiateItem(ViewGroup container, int position) {
+<span class="fc" id="L318">            layoutInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);</span>
+<span class="fc" id="L319">            View view = layoutInflater.inflate(layouts[position], container, false);</span>
+<span class="fc" id="L320">            container.addView(view);</span>
+            ImageView imageView;
+<span class="pc bpc" id="L322" title="1 of 5 branches missed.">            switch(position)</span>
+            {
+                case 0:
+<span class="fc" id="L325">                    imageView = (ImageView) findViewById(R.id.main_menu_img1);</span>
+<span class="fc bfc" id="L326" title="All 2 branches covered.">                    if(PreferenceManager.getDefaultSharedPreferences(MainActivity.this).getString(&quot;pref_color&quot;,&quot;1&quot;).equals(&quot;1&quot;))</span>
+<span class="fc" id="L327">                        Glide.with(MainActivity.this).load(R.drawable.layout4x4_s).into(imageView);</span>
+                    else
+<span class="fc" id="L329">                        Glide.with(MainActivity.this).load(R.drawable.layout4x4_o).into(imageView);</span>
+<span class="fc" id="L330">                    break;</span>
+                case 1:
+<span class="fc" id="L332">                    imageView = (ImageView) findViewById(R.id.main_menu_img2);</span>
+<span class="fc bfc" id="L333" title="All 2 branches covered.">                    if(PreferenceManager.getDefaultSharedPreferences(MainActivity.this).getString(&quot;pref_color&quot;,&quot;1&quot;).equals(&quot;1&quot;))</span>
+<span class="fc" id="L334">                        Glide.with(MainActivity.this).load(R.drawable.layout5x5_s).into(imageView);</span>
+                    else
+<span class="fc" id="L336">                        Glide.with(MainActivity.this).load(R.drawable.layout5x5_o).into(imageView);</span>
+<span class="fc" id="L337">                    break;</span>
+                case 2:
+<span class="fc" id="L339">                    imageView = (ImageView) findViewById(R.id.main_menu_img3);</span>
+<span class="fc bfc" id="L340" title="All 2 branches covered.">                    if(PreferenceManager.getDefaultSharedPreferences(MainActivity.this).getString(&quot;pref_color&quot;,&quot;1&quot;).equals(&quot;1&quot;))</span>
+<span class="fc" id="L341">                        Glide.with(MainActivity.this).load(R.drawable.layout6x6_s).into(imageView);</span>
+                    else
+<span class="fc" id="L343">                        Glide.with(MainActivity.this).load(R.drawable.layout6x6_o).into(imageView);</span>
+<span class="fc" id="L344">                    break;</span>
+                case 3:
+<span class="fc" id="L346">                    imageView = (ImageView) findViewById(R.id.main_menu_img4);</span>
+<span class="fc bfc" id="L347" title="All 2 branches covered.">                    if(PreferenceManager.getDefaultSharedPreferences(MainActivity.this).getString(&quot;pref_color&quot;,&quot;1&quot;).equals(&quot;1&quot;))</span>
+<span class="fc" id="L348">                        Glide.with(MainActivity.this).load(R.drawable.layout7x7_s).into(imageView);</span>
+                    else
+<span class="fc" id="L350">                        Glide.with(MainActivity.this).load(R.drawable.layout7x7_o).into(imageView);</span>
+                    break;
+            }
+<span class="fc" id="L353">            return view;</span>
+        }
+
+        @Override
+        public int getCount() {
+<span class="fc" id="L358">            return layouts.length;</span>
+        }
+
+        @Override
+        public boolean isViewFromObject(View view, Object obj) {
+<span class="fc bfc" id="L363" title="All 2 branches covered.">            return view == obj;</span>
+        }
+
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+<span class="fc" id="L369">            View view = (View) object;</span>
+<span class="fc" id="L370">            container.removeView(view);</span>
+<span class="fc" id="L371">        }</span>
+    }
+
+    /**
+     * This method connects the Activity to the menu item
+     * @return ID of the menu item it belongs to
+     */
+    @Override
+    protected int getNavigationDrawerID() {
+<span class="fc" id="L380">        return R.id.nav_example;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>Generated by the Android Gradle plugin 7.3.1</div></body></html>

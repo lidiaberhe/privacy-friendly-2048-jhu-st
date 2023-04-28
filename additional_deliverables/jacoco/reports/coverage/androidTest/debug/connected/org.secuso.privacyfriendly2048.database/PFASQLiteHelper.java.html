@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PFASQLiteHelper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=0;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">debug</a> &gt; <a href="index.source.html" class="el_package">org.secuso.privacyfriendly2048.database</a> &gt; <span class="el_source">PFASQLiteHelper.java</span></div><h1>PFASQLiteHelper.java</h1><pre class="source lang-java linenums">/*
+ This file is part of Privacy Friendly 2048. This app implements the functions of the
+ game 2048 in a privacy friendly version.
+
+ Privacy Friendly 2048 is free software:
+ you can redistribute it and/or modify it under the terms of the
+ GNU General Public License as published by the Free Software Foundation,
+ either version 3 of the License, or any later version.
+
+ Privacy Friendly App Example is distributed in the hope
+ that it will be useful, but WITHOUT ANY WARRANTY; without even
+ the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ See the GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with Privacy Friendly App Example. If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ */
+
+package org.secuso.privacyfriendly2048.database;
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ *
+ * @author Karola Marky
+ * @version 20161223
+ * Structure based on http://www.androidhive.info/2011/11/android-sqlite-database-tutorial/
+ * accessed at 16th June 2016
+ *
+ * This class defines the structure of our database.
+ */
+
+public class PFASQLiteHelper extends SQLiteOpenHelper {
+
+    private static final int DATABASE_VERSION = 1;
+
+    /**
+     * Use the following pattern for the name of the database
+     * PF_[Name of the app]_DB
+     */
+    public static final String DATABASE_NAME = &quot;PF_EXAMPLE_DB&quot;;
+
+    //Names of table in the database
+    private static final String TABLE_SAMPLEDATA = &quot;SAMPLE_DATA&quot;;
+
+    //Names of columns in the databases in this example we only use one table
+    private static final String KEY_ID = &quot;id&quot;;
+    private static final String KEY_DOMAIN = &quot;domain&quot;;
+    private static final String KEY_USERNAME = &quot;username&quot;;
+    private static final String KEY_LENGTH = &quot;length&quot;;
+
+    public PFASQLiteHelper(Context context) {
+<span class="fc" id="L61">        super(context, DATABASE_NAME, null, DATABASE_VERSION);</span>
+<span class="fc" id="L62">    }</span>
+
+    @Override
+    public void onCreate(SQLiteDatabase sqLiteDatabase) {
+
+        /**
+         * Create the table sample data on the first start
+         * Be careful with the final line of the query and the SQL syntax that is used in the String.
+         */
+<span class="nc" id="L71">        String CREATE_SAMPLEDATA_TABLE = &quot;CREATE TABLE &quot; + TABLE_SAMPLEDATA +</span>
+                &quot;(&quot; +
+                KEY_ID + &quot; INTEGER PRIMARY KEY AUTOINCREMENT,&quot; +
+                KEY_DOMAIN + &quot; TEXT NOT NULL,&quot; +
+                KEY_USERNAME + &quot; TEXT NOT NULL,&quot; +
+                KEY_LENGTH + &quot; INTEGER);&quot;;
+
+<span class="nc" id="L78">        sqLiteDatabase.execSQL(CREATE_SAMPLEDATA_TABLE);</span>
+<span class="nc" id="L79">    }</span>
+
+    @Override
+    public void onUpgrade(SQLiteDatabase sqLiteDatabase, int oldVersion, int newVersion) {
+<span class="nc" id="L83">        sqLiteDatabase.execSQL(&quot;DROP TABLE IF EXISTS &quot; + TABLE_SAMPLEDATA);</span>
+
+<span class="nc" id="L85">        onCreate(sqLiteDatabase);</span>
+<span class="nc" id="L86">    }</span>
+
+
+    /**
+     * Adds a single sampleData to our Table
+     * As no ID is provided and KEY_ID is autoincremented (see line 50)
+     * the last available key of the table is taken and incremented by 1
+     * @param sampleData data that will be added
+     */
+    public void addSampleData(PFASampleDataType sampleData) {
+<span class="nc" id="L96">        SQLiteDatabase database = this.getWritableDatabase();</span>
+
+        //To adjust this class for your own data, please add your values here.
+<span class="nc" id="L99">        ContentValues values = new ContentValues();</span>
+<span class="nc" id="L100">        values.put(KEY_DOMAIN, sampleData.getDOMAIN());</span>
+<span class="nc" id="L101">        values.put(KEY_USERNAME, sampleData.getUSERNAME());</span>
+<span class="nc" id="L102">        values.put(KEY_LENGTH, sampleData.getLENGTH());</span>
+
+<span class="nc" id="L104">        database.insert(TABLE_SAMPLEDATA, null, values);</span>
+<span class="nc" id="L105">        database.close();</span>
+<span class="nc" id="L106">    }</span>
+
+    /**
+     * Adds a single sampleData to our Table
+     * This method can be used for re-insertion for example an undo-action
+     * Therefore, the key of the sampleData will also be written into the database
+     * @param sampleData data that will be added
+     * Only use this for undo options and re-insertions
+     */
+    public void addSampleDataWithID(PFASampleDataType sampleData) {
+<span class="nc" id="L116">        SQLiteDatabase database = this.getWritableDatabase();</span>
+
+        //To adjust this class for your own data, please add your values here.
+<span class="nc" id="L119">        ContentValues values = new ContentValues();</span>
+<span class="nc" id="L120">        values.put(KEY_ID, sampleData.getID());</span>
+<span class="nc" id="L121">        values.put(KEY_DOMAIN, sampleData.getDOMAIN());</span>
+<span class="nc" id="L122">        values.put(KEY_USERNAME, sampleData.getUSERNAME());</span>
+<span class="nc" id="L123">        values.put(KEY_LENGTH, sampleData.getLENGTH());</span>
+
+<span class="nc" id="L125">        database.insert(TABLE_SAMPLEDATA, null, values);</span>
+
+        //always close the database after insertion
+<span class="nc" id="L128">        database.close();</span>
+<span class="nc" id="L129">    }</span>
+
+
+    /**
+     * This method gets a single sampleData entry based on its ID
+     * @param id of the sampleData that is requested, could be get by the get-method
+     * @return the sampleData that is requested.
+     */
+    public PFASampleDataType getSampleData(int id) {
+<span class="nc" id="L138">        SQLiteDatabase database = this.getWritableDatabase();</span>
+
+<span class="nc" id="L140">        Log.d(&quot;DATABASE&quot;, Integer.toString(id));</span>
+
+<span class="nc" id="L142">        Cursor cursor = database.query(TABLE_SAMPLEDATA, new String[]{KEY_ID,</span>
+                        KEY_DOMAIN, KEY_USERNAME, KEY_LENGTH}, KEY_ID + &quot;=?&quot;,
+<span class="nc" id="L144">                new String[]{String.valueOf(id)}, null, null, null, null);</span>
+
+<span class="nc" id="L146">        PFASampleDataType sampleData = new PFASampleDataType();</span>
+
+<span class="nc bnc" id="L148" title="All 4 branches missed.">        if( cursor != null &amp;&amp; cursor.moveToFirst() ){</span>
+<span class="nc" id="L149">            sampleData.setID(Integer.parseInt(cursor.getString(0)));</span>
+<span class="nc" id="L150">            sampleData.setDOMAIN(cursor.getString(1));</span>
+<span class="nc" id="L151">            sampleData.setUSERNAME(cursor.getString(2));</span>
+<span class="nc" id="L152">            sampleData.setLENGTH(Integer.parseInt(cursor.getString(3)));</span>
+
+<span class="nc" id="L154">            Log.d(&quot;DATABASE&quot;, &quot;Read &quot; + cursor.getString(1) + &quot; from DB&quot;);</span>
+
+<span class="nc" id="L156">            cursor.close();</span>
+        }
+
+<span class="nc" id="L159">        return sampleData;</span>
+
+    }
+
+    /**
+     * This method returns all data from the DB as a list
+     * This could be used for instance to fill a recyclerView
+     * @return A list of all available sampleData in the Database
+     */
+    public List&lt;PFASampleDataType&gt; getAllSampleData() {
+<span class="nc" id="L169">        List&lt;PFASampleDataType&gt; sampleDataList = new ArrayList&lt;PFASampleDataType&gt;();</span>
+
+<span class="nc" id="L171">        String selectQuery = &quot;SELECT  * FROM &quot; + TABLE_SAMPLEDATA;</span>
+
+<span class="nc" id="L173">        SQLiteDatabase database = this.getWritableDatabase();</span>
+<span class="nc" id="L174">        Cursor cursor = database.rawQuery(selectQuery, null);</span>
+
+<span class="nc" id="L176">        PFASampleDataType sampleData = null;</span>
+
+<span class="nc bnc" id="L178" title="All 2 branches missed.">        if (cursor.moveToFirst()) {</span>
+            do {
+                //To adjust this class for your own data, please add your values here.
+                //be careful to use the right get-method to get the data from the cursor
+<span class="nc" id="L182">                sampleData = new PFASampleDataType();</span>
+<span class="nc" id="L183">                sampleData.setID(Integer.parseInt(cursor.getString(0)));</span>
+<span class="nc" id="L184">                sampleData.setDOMAIN(cursor.getString(1));</span>
+<span class="nc" id="L185">                sampleData.setUSERNAME(cursor.getString(2));</span>
+<span class="nc" id="L186">                sampleData.setLENGTH(Integer.parseInt(cursor.getString(3)));</span>
+
+<span class="nc" id="L188">                sampleDataList.add(sampleData);</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">            } while (cursor.moveToNext());</span>
+        }
+
+<span class="nc" id="L192">        return sampleDataList;</span>
+    }
+
+    /**
+     * Updates a database entry.
+     * @param sampleData
+     * @return actually makes the update
+     */
+    public int updateSampleData(PFASampleDataType sampleData) {
+<span class="nc" id="L201">        SQLiteDatabase database = this.getWritableDatabase();</span>
+
+        //To adjust this class for your own data, please add your values here.
+<span class="nc" id="L204">        ContentValues values = new ContentValues();</span>
+<span class="nc" id="L205">        values.put(KEY_DOMAIN, sampleData.getDOMAIN());</span>
+<span class="nc" id="L206">        values.put(KEY_USERNAME, sampleData.getUSERNAME());</span>
+<span class="nc" id="L207">        values.put(KEY_LENGTH, sampleData.getLENGTH());</span>
+
+<span class="nc" id="L209">        return database.update(TABLE_SAMPLEDATA, values, KEY_ID + &quot; = ?&quot;,</span>
+<span class="nc" id="L210">                new String[] { String.valueOf(sampleData.getID()) });</span>
+    }
+
+    /**
+     * Deletes sampleData from the DB
+     * This method takes the sampleData and extracts its key to build the delete-query
+     * @param sampleData that will be deleted
+     */
+    public void deleteSampleData(PFASampleDataType sampleData) {
+<span class="nc" id="L219">        SQLiteDatabase database = this.getWritableDatabase();</span>
+<span class="nc" id="L220">        database.delete(TABLE_SAMPLEDATA, KEY_ID + &quot; = ?&quot;,</span>
+<span class="nc" id="L221">                new String[] { Integer.toString(sampleData.getID()) });</span>
+        //always close the DB after deletion of single entries
+<span class="nc" id="L223">        database.close();</span>
+<span class="nc" id="L224">    }</span>
+
+    /**
+     * deletes all sampleData from the table.
+     * This could be used in case of a reset of the app.
+     */
+    public void deleteAllSampleData() {
+<span class="nc" id="L231">        SQLiteDatabase database = this.getWritableDatabase();</span>
+<span class="nc" id="L232">        database.execSQL(&quot;delete from &quot;+ TABLE_SAMPLEDATA);</span>
+<span class="nc" id="L233">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>Generated by the Android Gradle plugin 7.3.1</div></body></html>

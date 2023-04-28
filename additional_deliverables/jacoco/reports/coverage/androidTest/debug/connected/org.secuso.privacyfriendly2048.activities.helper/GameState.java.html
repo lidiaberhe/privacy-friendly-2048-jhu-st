@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GameState.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=0;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">debug</a> &gt; <a href="index.source.html" class="el_package">org.secuso.privacyfriendly2048.activities.helper</a> &gt; <span class="el_source">GameState.java</span></div><h1>GameState.java</h1><pre class="source lang-java linenums">/*
+ This file is part of Privacy Friendly 2048. This app implements the functions of the
+ game 2048 in a privacy friendly version.
+
+ Privacy Friendly 2048 is free software:
+ you can redistribute it and/or modify it under the terms of the
+ GNU General Public License as published by the Free Software Foundation,
+ either version 3 of the License, or any later version.
+
+ Privacy Friendly App Example is distributed in the hope
+ that it will be useful, but WITHOUT ANY WARRANTY; without even
+ the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ See the GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with Privacy Friendly App Example. If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ */
+
+
+package org.secuso.privacyfriendly2048.activities.helper;
+
+
+import android.util.Log;
+
+import org.secuso.privacyfriendly2048.activities.Element;
+
+import java.io.Serializable;
+
+/**
+ *
+ * @author Julian Wadephul and Saskia Jacob
+ * @version 20180807
+ */
+public class GameState implements Serializable {
+<span class="pc" id="L35">    public int n = 4;</span>
+    public int[] numbers;
+    public int[] last_numbers;
+<span class="pc" id="L38">    public int points = 0;</span>
+<span class="pc" id="L39">    public int last_points = 0;</span>
+<span class="pc" id="L40">    public boolean undo=false;</span>
+
+    public GameState(int size)
+<span class="fc" id="L43">    {</span>
+<span class="fc" id="L44">        numbers = new int[size*size];</span>
+<span class="fc" id="L45">    }</span>
+    public GameState(int [][] e)
+<span class="nc" id="L47">    {</span>
+<span class="nc" id="L48">        int length = 1;</span>
+<span class="nc bnc" id="L49" title="All 2 branches missed.">        for(int i = 0; i &lt; e.length; i++)</span>
+        {
+<span class="nc bnc" id="L51" title="All 2 branches missed.">            if(e[i].length &gt; length)</span>
+<span class="nc" id="L52">                length = e[i].length;</span>
+        }
+<span class="nc" id="L54">        this.n = e.length;</span>
+<span class="nc" id="L55">        numbers = new int[e.length*e.length];</span>
+<span class="nc" id="L56">        int c = 0;</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        for(int i = 0; i &lt; e.length;i++)</span>
+        {
+<span class="nc bnc" id="L59" title="All 2 branches missed.">            for(int j = 0; j &lt; e[i].length;j++){</span>
+<span class="nc" id="L60">                numbers[c++] = e[i][j];</span>
+            }
+        }
+<span class="nc" id="L63">        last_numbers = numbers;</span>
+<span class="nc" id="L64">    }</span>
+    public GameState(Element[][] e, Element[][] e2)
+<span class="fc" id="L66">    {</span>
+<span class="fc" id="L67">        int length = 1;</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">        for(int i = 0; i &lt; e.length; i++)</span>
+        {
+<span class="fc bfc" id="L70" title="All 2 branches covered.">            if(e[i].length &gt; length)</span>
+<span class="fc" id="L71">                length = e[i].length;</span>
+        }
+<span class="fc" id="L73">        this.n = e.length;</span>
+<span class="fc" id="L74">        numbers = new int[e.length*e.length];</span>
+<span class="fc" id="L75">        int c = 0;</span>
+<span class="fc bfc" id="L76" title="All 2 branches covered.">        for(int i = 0; i &lt; e.length;i++)</span>
+        {
+<span class="fc bfc" id="L78" title="All 2 branches covered.">            for(int j = 0; j &lt; e[i].length;j++){</span>
+
+<span class="fc" id="L80">                numbers[c++] = e[i][j].number;</span>
+            }
+        }
+<span class="fc" id="L83">        length = 1;</span>
+<span class="fc bfc" id="L84" title="All 2 branches covered.">        for(int i = 0; i &lt; e2.length; i++)</span>
+        {
+<span class="fc bfc" id="L86" title="All 2 branches covered.">            if(e2[i].length &gt; length)</span>
+<span class="fc" id="L87">                length = e2[i].length;</span>
+        }
+<span class="fc" id="L89">        last_numbers = new int[e2.length*e2.length];</span>
+<span class="fc" id="L90">        c = 0;</span>
+<span class="fc bfc" id="L91" title="All 2 branches covered.">        for(int i = 0; i &lt; e2.length;i++)</span>
+        {
+<span class="fc bfc" id="L93" title="All 2 branches covered.">            for(int j = 0; j &lt; e2[i].length;j++){</span>
+
+<span class="fc" id="L95">                last_numbers[c++] = e2[i][j].number;</span>
+            }
+        }
+<span class="fc" id="L98">    }</span>
+    public int getNumber(int i, int j)
+    {
+
+        try {
+<span class="fc" id="L103">            return numbers[i*n+j];</span>
+        }
+<span class="nc" id="L105">        catch(ArrayIndexOutOfBoundsException e)</span>
+        {
+<span class="nc" id="L107">            e.printStackTrace();</span>
+        }
+
+<span class="nc" id="L110">        return 0;</span>
+    }
+    public int getLastNumber(int i, int j)
+    {
+
+        try {
+<span class="fc" id="L116">            return last_numbers[i*n+j];</span>
+        }
+<span class="nc" id="L118">        catch(ArrayIndexOutOfBoundsException e)</span>
+        {
+<span class="nc" id="L120">            e.printStackTrace();</span>
+        }
+
+<span class="nc" id="L123">        return 0;</span>
+    }
+
+
+
+    @Override
+    public String toString() {
+<span class="nc" id="L130">        String result = &quot;numbers: &quot;;</span>
+<span class="nc bnc" id="L131" title="All 2 branches missed.">        for (int i:numbers) {</span>
+<span class="nc" id="L132">            result += i + &quot; &quot;;</span>
+        }
+<span class="nc" id="L134">        result += &quot;, n: &quot; + n;</span>
+<span class="nc" id="L135">        result += &quot;, points: &quot; + points;</span>
+<span class="nc" id="L136">        result += &quot;, undo: &quot; + undo;</span>
+<span class="nc" id="L137">        return result;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>Generated by the Android Gradle plugin 7.3.1</div></body></html>

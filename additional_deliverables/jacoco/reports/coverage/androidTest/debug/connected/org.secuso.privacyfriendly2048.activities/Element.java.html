@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Element.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=0;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">debug</a> &gt; <a href="index.source.html" class="el_package">org.secuso.privacyfriendly2048.activities</a> &gt; <span class="el_source">Element.java</span></div><h1>Element.java</h1><pre class="source lang-java linenums">/*
+ This file is part of Privacy Friendly 2048. This app implements the functions of the
+ game 2048 in a privacy friendly version.
+
+ Privacy Friendly 2048 is free software:
+ you can redistribute it and/or modify it under the terms of the
+ GNU General Public License as published by the Free Software Foundation,
+ either version 3 of the License, or any later version.
+
+ Privacy Friendly App Example is distributed in the hope
+ that it will be useful, but WITHOUT ANY WARRANTY; without even
+ the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ See the GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with Privacy Friendly App Example. If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ */
+
+
+package org.secuso.privacyfriendly2048.activities;
+
+import android.content.Context;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.ShapeDrawable;
+import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
+import android.view.View;
+
+import org.secuso.privacyfriendly2048.R;
+
+/**
+ * This class extends the android.support.v7.widget.AppCompatButton class and represents a box on the game field.
+ * This element contains different features like the presented value (number) and the position of this value in the playing field (posX, posY).
+ * Because of the animation a distinction is made between the calculated value and the displayed value.
+ * Furthermore there are more features like the color of the box and the font size of the value.
+ *
+ * @author Julian Wadephul and Saskia Jacob
+ * @version 20180910
+ */
+
+public class Element extends android.support.v7.widget.AppCompatButton {
+<span class="fc" id="L44">    public int number = 0;</span>
+<span class="fc" id="L45">    public int dNumber = 0;</span>
+<span class="fc" id="L46">    public int posX = 0;</span>
+<span class="fc" id="L47">    public int posY = 0;</span>
+<span class="fc" id="L48">    public int dPosX = 0;</span>
+<span class="fc" id="L49">    public int dPosY = 0;</span>
+    public boolean activated;
+<span class="fc" id="L51">    public boolean animateMoving = false;</span>
+<span class="fc" id="L52">    public float textSize = 24;</span>
+    Context context;
+    int color;
+
+
+    public Element(Context c)
+    {
+<span class="fc" id="L59">        super(c);</span>
+<span class="fc" id="L60">        context = c;</span>
+<span class="fc" id="L61">        setAllCaps(false);</span>
+<span class="fc" id="L62">        setTextSize(textSize);</span>
+<span class="fc" id="L63">        setBackgroundResource(R.drawable.game_brick);</span>
+<span class="fc bfc" id="L64" title="All 2 branches covered.">        if(PreferenceManager.getDefaultSharedPreferences(context).getString(&quot;pref_color&quot;,&quot;1&quot;).equals(&quot;1&quot;))</span>
+<span class="fc" id="L65">            setColor(context.getResources().getColor(R.color.button_empty));</span>
+        else
+<span class="fc" id="L67">            setColor(context.getResources().getColor(R.color.button_empty_2));</span>
+
+<span class="fc" id="L69">    }</span>
+
+    public void drawItem() {
+<span class="fc" id="L72">        dNumber = number;</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        activated = (number!=0);</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">        if(number== 0) {</span>
+<span class="fc" id="L75">            setVisibility(View.INVISIBLE);</span>
+<span class="fc" id="L76">            setText(&quot;&quot;);</span>
+        }
+        else {
+<span class="fc" id="L79">            setText(&quot;&quot; + number);</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">            if(getVisibility() != View.VISIBLE)</span>
+<span class="fc" id="L81">                setVisibility(View.VISIBLE);</span>
+        }
+
+<span class="fc bfc" id="L84" title="All 2 branches covered.">        if(PreferenceManager.getDefaultSharedPreferences(context).getString(&quot;pref_color&quot;,&quot;1&quot;).equals(&quot;1&quot;))</span>
+        {
+<span class="pc bpc" id="L86" title="13 of 17 branches missed.">            switch (number){</span>
+                case 0:
+<span class="fc" id="L88">                    setColor(ContextCompat.getColor(context, R.color.button_empty));</span>
+<span class="fc" id="L89">                    setTextColor(ContextCompat.getColor(context,R.color.black));</span>
+<span class="fc" id="L90">                    break;</span>
+                case 2:
+<span class="fc" id="L92">                    setColor(ContextCompat.getColor(context,R.color.button2));</span>
+<span class="fc" id="L93">                    setTextColor(ContextCompat.getColor(context,R.color.black));</span>
+<span class="fc" id="L94">                    break;</span>
+                case 4:
+<span class="fc" id="L96">                    setColor(ContextCompat.getColor(context,R.color.button4));</span>
+<span class="fc" id="L97">                    setTextColor(ContextCompat.getColor(context,R.color.black));</span>
+<span class="fc" id="L98">                    break;</span>
+                case 8:
+<span class="fc" id="L100">                    setColor(ContextCompat.getColor(context,R.color.button8));</span>
+<span class="fc" id="L101">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="fc" id="L102">                    break;</span>
+                case 16:
+<span class="nc" id="L104">                    setColor(ContextCompat.getColor(context,R.color.button16));</span>
+<span class="nc" id="L105">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L106">                    break;</span>
+                case 32:
+<span class="nc" id="L108">                    setColor(ContextCompat.getColor(context,R.color.button32));</span>
+<span class="nc" id="L109">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L110">                    break;</span>
+                case 64:
+<span class="nc" id="L112">                    setColor(ContextCompat.getColor(context,R.color.button64));</span>
+<span class="nc" id="L113">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L114">                    break;</span>
+                case 128:
+<span class="nc" id="L116">                    setColor(ContextCompat.getColor(context,R.color.button128));</span>
+<span class="nc" id="L117">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L118">                    break;</span>
+                case 256:
+<span class="nc" id="L120">                    setColor(ContextCompat.getColor(context,R.color.button256));</span>
+<span class="nc" id="L121">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L122">                    break;</span>
+                case 512:
+<span class="nc" id="L124">                    setColor(ContextCompat.getColor(context,R.color.button512));</span>
+<span class="nc" id="L125">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L126">                    break;</span>
+                case 1024:
+<span class="nc" id="L128">                    setColor(ContextCompat.getColor(context,R.color.button1024));</span>
+<span class="nc" id="L129">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L130">                    break;</span>
+                case 2048:
+<span class="nc" id="L132">                    setColor(ContextCompat.getColor(context,R.color.button2048));</span>
+<span class="nc" id="L133">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L134">                    break;</span>
+                case 4096:
+<span class="nc" id="L136">                    setColor(ContextCompat.getColor(context,R.color.button4096));</span>
+<span class="nc" id="L137">                    setTextColor(ContextCompat.getColor(context,R.color.black));</span>
+<span class="nc" id="L138">                    break;</span>
+                case 8192:
+<span class="nc" id="L140">                    setColor(ContextCompat.getColor(context,R.color.button8192));</span>
+<span class="nc" id="L141">                    setTextColor(ContextCompat.getColor(context,R.color.black));</span>
+<span class="nc" id="L142">                    break;</span>
+                case 16384:
+<span class="nc" id="L144">                    setColor(ContextCompat.getColor(context,R.color.button16384));</span>
+<span class="nc" id="L145">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L146">                    textSize = textSize * 0.8f;</span>
+<span class="nc" id="L147">                    setTextSize(textSize);</span>
+<span class="nc" id="L148">                    break;</span>
+                case 32768:
+<span class="nc" id="L150">                    setColor(ContextCompat.getColor(context,R.color.button32768));</span>
+<span class="nc" id="L151">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L152">                    textSize = textSize * 0.8f;</span>
+<span class="nc" id="L153">                    setTextSize(textSize);</span>
+<span class="fc" id="L154">                    break;</span>
+            }
+        }
+        else
+        {
+<span class="pc bpc" id="L159" title="13 of 17 branches missed.">            switch (number){</span>
+                case 0:
+<span class="fc" id="L161">                    setColor(R.color.button_empty_2);</span>
+<span class="fc" id="L162">                    setTextColor(ContextCompat.getColor(context,R.color.black));</span>
+<span class="fc" id="L163">                    break;</span>
+                case 2:
+<span class="fc" id="L165">                    setColor(ContextCompat.getColor(context,R.color.button2_2));</span>
+<span class="fc" id="L166">                    setTextColor(ContextCompat.getColor(context,R.color.black));</span>
+<span class="fc" id="L167">                    break;</span>
+                case 4:
+<span class="fc" id="L169">                    setColor(ContextCompat.getColor(context,R.color.button4_2));</span>
+<span class="fc" id="L170">                    setTextColor(ContextCompat.getColor(context,R.color.black));</span>
+<span class="fc" id="L171">                    break;</span>
+                case 8:
+<span class="fc" id="L173">                    setColor(ContextCompat.getColor(context,R.color.button8_2));</span>
+<span class="fc" id="L174">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="fc" id="L175">                    break;</span>
+                case 16:
+<span class="nc" id="L177">                    setColor(ContextCompat.getColor(context,R.color.button16_2));</span>
+<span class="nc" id="L178">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L179">                    break;</span>
+                case 32:
+<span class="nc" id="L181">                    setColor(ContextCompat.getColor(context,R.color.button32_2));</span>
+<span class="nc" id="L182">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L183">                    break;</span>
+                case 64:
+<span class="nc" id="L185">                    setColor(ContextCompat.getColor(context,R.color.button64_2));</span>
+<span class="nc" id="L186">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L187">                    break;</span>
+                case 128:
+<span class="nc" id="L189">                    setColor(ContextCompat.getColor(context,R.color.button128_2));</span>
+<span class="nc" id="L190">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L191">                    break;</span>
+                case 256:
+<span class="nc" id="L193">                    setColor(ContextCompat.getColor(context,R.color.button256_2));</span>
+<span class="nc" id="L194">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L195">                    break;</span>
+                case 512:
+<span class="nc" id="L197">                    setColor(ContextCompat.getColor(context,R.color.button512_2));</span>
+<span class="nc" id="L198">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L199">                    break;</span>
+                case 1024:
+<span class="nc" id="L201">                    setColor(ContextCompat.getColor(context,R.color.button1024_2));</span>
+<span class="nc" id="L202">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L203">                    break;</span>
+                case 2048:
+<span class="nc" id="L205">                    setColor(ContextCompat.getColor(context,R.color.button2048_2));</span>
+<span class="nc" id="L206">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L207">                    break;</span>
+                case 4096:
+<span class="nc" id="L209">                    setColor(ContextCompat.getColor(context,R.color.button4096_2));</span>
+<span class="nc" id="L210">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L211">                    break;</span>
+                case 8192:
+<span class="nc" id="L213">                    setColor(ContextCompat.getColor(context,R.color.button8192_2));</span>
+<span class="nc" id="L214">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L215">                    break;</span>
+                case 16384:
+<span class="nc" id="L217">                    setColor(ContextCompat.getColor(context,R.color.button16384_2));</span>
+<span class="nc" id="L218">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L219">                    textSize = textSize * 0.8f;</span>
+<span class="nc" id="L220">                    setTextSize(textSize);</span>
+<span class="nc" id="L221">                    break;</span>
+                case 32768:
+<span class="nc" id="L223">                    setColor(ContextCompat.getColor(context,R.color.button32768_2));</span>
+<span class="nc" id="L224">                    setTextColor(ContextCompat.getColor(context,R.color.white));</span>
+<span class="nc" id="L225">                    textSize = textSize * 0.8f;</span>
+<span class="nc" id="L226">                    setTextSize(textSize);</span>
+                    break;
+            }
+        }
+<span class="fc" id="L230">    }</span>
+    private void setColor(int c)
+    {
+<span class="fc" id="L233">        color = c;</span>
+<span class="fc" id="L234">        Drawable background = getBackground();</span>
+<span class="pc bpc" id="L235" title="1 of 2 branches missed.">        if (background instanceof ShapeDrawable) {</span>
+<span class="nc" id="L236">            ((ShapeDrawable)background).getPaint().setColor(c);</span>
+<span class="pc bpc" id="L237" title="1 of 2 branches missed.">        } else if (background instanceof GradientDrawable) {</span>
+<span class="fc" id="L238">            ((GradientDrawable)background).setColor(c);</span>
+<span class="nc bnc" id="L239" title="All 2 branches missed.">        } else if (background instanceof ColorDrawable) {</span>
+<span class="nc" id="L240">            ((ColorDrawable)background).setColor(c);</span>
+        }
+<span class="fc" id="L242">    }</span>
+    public String toString()
+    {
+<span class="nc" id="L245">        return &quot;number: &quot; + number;</span>
+    }
+
+    public int getNumber() {
+<span class="fc" id="L249">        return number;</span>
+    }
+
+    public void setDPosition(int i, int j)
+    {
+<span class="fc" id="L254">        dPosX = i;</span>
+<span class="fc" id="L255">        dPosY = j;</span>
+<span class="fc" id="L256">    }</span>
+    public void setNumber(int i)
+    {
+<span class="fc" id="L259">        number = i;</span>
+<span class="fc" id="L260">    }</span>
+<span class="fc" id="L261">    public int getdPosX(){ return dPosX;}</span>
+
+<span class="fc" id="L263">    public int getdPosY(){ return dPosY;}</span>
+
+    public int getdNumber(){
+<span class="nc" id="L266">        return dNumber;</span>
+    }
+
+    public int getPosX() {
+<span class="nc" id="L270">        return posX;</span>
+    }
+
+    public int getPosY() {
+<span class="nc" id="L274">        return posY;</span>
+    }
+    public void updateFontSize(){
+<span class="fc" id="L277">        textSize=(float)(getLayoutParams().width/7.0);</span>
+<span class="fc" id="L278">        setTextSize(textSize);</span>
+<span class="fc" id="L279">    }</span>
+    public Element copy()
+    {
+<span class="fc" id="L282">        Element temp = new Element(context);</span>
+<span class="fc" id="L283">        temp.number = number;</span>
+<span class="fc" id="L284">        temp.dNumber = dNumber;</span>
+<span class="fc" id="L285">        temp.posX = posX;</span>
+<span class="fc" id="L286">        temp.posY = posY;</span>
+<span class="fc" id="L287">        temp.dPosX = dPosX;</span>
+<span class="fc" id="L288">        temp.dPosY = dPosY;</span>
+<span class="fc" id="L289">        temp.activated = activated;</span>
+<span class="fc" id="L290">        temp.animateMoving = animateMoving;</span>
+<span class="fc" id="L291">        temp.textSize = textSize;</span>
+<span class="fc" id="L292">        temp.color = color;</span>
+<span class="fc" id="L293">        temp.setTextSize(textSize);</span>
+        //temp.setBackgroundResource(backGroundResource);
+<span class="fc" id="L295">        temp.setColor(color);</span>
+<span class="fc" id="L296">        temp.setVisibility(getVisibility());</span>
+<span class="fc" id="L297">        temp.setLayoutParams(getLayoutParams());</span>
+<span class="fc" id="L298">        return temp;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>Generated by the Android Gradle plugin 7.3.1</div></body></html>

@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GameStatistics.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=0;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">debug</a> &gt; <a href="index.source.html" class="el_package">org.secuso.privacyfriendly2048.activities.helper</a> &gt; <span class="el_source">GameStatistics.java</span></div><h1>GameStatistics.java</h1><pre class="source lang-java linenums">/*
+ This file is part of Privacy Friendly 2048. This app implements the functions of the
+ game 2048 in a privacy friendly version.
+
+ Privacy Friendly 2048 is free software:
+ you can redistribute it and/or modify it under the terms of the
+ GNU General Public License as published by the Free Software Foundation,
+ either version 3 of the License, or any later version.
+
+ Privacy Friendly App Example is distributed in the hope
+ that it will be useful, but WITHOUT ANY WARRANTY; without even
+ the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ See the GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with Privacy Friendly App Example. If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ */
+
+
+package org.secuso.privacyfriendly2048.activities.helper;
+
+import java.io.Serializable;
+
+/**
+ * The current statistics in each modes is defined in this class.
+ * It contains the highest reached number, the amount of swipes (total and for each direction), playing time, highest score and the amount of using the undo button.
+ * For saving this data in a file, the interface java.io.Serializable is implemented.
+ *
+ * @author Julian Wadephul and Saskia Jacob
+ * @version 20180910
+ */
+public class GameStatistics implements Serializable {
+<span class="fc" id="L33">    private long moves = 0;</span>
+<span class="fc" id="L34">    private long timePlayed = 0;</span>
+<span class="fc" id="L35">    private long highestNumber = 2;</span>
+<span class="fc" id="L36">    private int n = 4;</span>
+<span class="fc" id="L37">    private String filename = &quot;statistics&quot; + n + &quot;.txt&quot;;</span>
+<span class="fc" id="L38">    private long record = 0;</span>
+<span class="fc" id="L39">    private int undo = 0;</span>
+<span class="fc" id="L40">    private int moves_l = 0;</span>
+<span class="fc" id="L41">    private int moves_r = 0;</span>
+<span class="fc" id="L42">    private int moves_t= 0;</span>
+<span class="fc" id="L43">    private int moves_d = 0;</span>
+
+    public GameStatistics(int n)
+<span class="fc" id="L46">    {</span>
+<span class="fc" id="L47">        this.n = n;</span>
+<span class="fc" id="L48">        filename = &quot;statistics&quot; + n + &quot;.txt&quot;;</span>
+<span class="fc" id="L49">    }</span>
+
+
+    public long getHighestNumber() {
+<span class="fc" id="L53">        return highestNumber;</span>
+    }
+
+    public void setHighestNumber(long highestNumber) {
+<span class="fc bfc" id="L57" title="All 2 branches covered.">        if(this.highestNumber &lt; highestNumber)</span>
+<span class="fc" id="L58">                this.highestNumber = highestNumber;</span>
+<span class="fc" id="L59">    }</span>
+
+    public long getTimePlayed() {
+<span class="fc" id="L62">        return timePlayed;</span>
+    }
+
+    public void addTimePlayed(long timePlayed) {
+<span class="fc" id="L66">        this.timePlayed += timePlayed;</span>
+<span class="fc" id="L67">    }</span>
+
+    public boolean resetTimePlayed()
+    {
+<span class="nc" id="L71">        this.timePlayed = 0;</span>
+<span class="nc" id="L72">        return true;</span>
+    }
+
+    public long getMoves() {
+<span class="fc" id="L76">        return moves;</span>
+    }
+
+    public void addMoves(long moves) {
+<span class="fc" id="L80">        this.moves += moves;</span>
+<span class="fc" id="L81">    }</span>
+
+    public String getFilename() {
+<span class="fc" id="L84">        return filename;</span>
+    }
+
+    public long getRecord() {
+<span class="fc" id="L88">        return record;</span>
+    }
+
+    public void setRecord(long record) {
+<span class="fc" id="L92">        this.record = record;</span>
+<span class="fc" id="L93">    }</span>
+
+    public void undo()
+    {
+<span class="fc" id="L97">        undo++;</span>
+<span class="fc" id="L98">    }</span>
+    public void moveL()
+    {
+<span class="fc" id="L101">        moves_l++;</span>
+<span class="fc" id="L102">    }</span>
+    public void moveR()
+    {
+<span class="fc" id="L105">        moves_r++;</span>
+<span class="fc" id="L106">    }</span>
+    public void moveT()
+    {
+<span class="fc" id="L109">        moves_t++;</span>
+<span class="fc" id="L110">    }</span>
+    public void moveD()
+    {
+<span class="fc" id="L113">        moves_d++;</span>
+<span class="fc" id="L114">    }</span>
+
+    public int getUndo()
+    {
+<span class="fc" id="L118">        return undo;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L123">        return &quot;moves &quot; + moves +</span>
+               &quot; timePlayed &quot; + timePlayed/1000.0f +
+                &quot; highest Number &quot; + highestNumber +
+                &quot; record&quot; + record;
+    }
+
+    public int getMoves_d() {
+<span class="fc" id="L130">        return moves_d;</span>
+    }
+
+    public int getMoves_t() {
+<span class="fc" id="L134">        return moves_t;</span>
+    }
+
+    public int getMoves_r() {
+<span class="fc" id="L138">        return moves_r;</span>
+    }
+
+    public int getMoves_l() {
+<span class="fc" id="L142">        return moves_l;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>Generated by the Android Gradle plugin 7.3.1</div></body></html>

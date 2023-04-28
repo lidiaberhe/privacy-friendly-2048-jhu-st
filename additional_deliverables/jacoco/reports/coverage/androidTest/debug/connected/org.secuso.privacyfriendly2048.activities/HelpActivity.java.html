@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HelpActivity.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=0;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">debug</a> &gt; <a href="index.source.html" class="el_package">org.secuso.privacyfriendly2048.activities</a> &gt; <span class="el_source">HelpActivity.java</span></div><h1>HelpActivity.java</h1><pre class="source lang-java linenums">/*
+ This file is part of Privacy Friendly 2048. This app implements the functions of the
+ game 2048 in a privacy friendly version.
+
+ Privacy Friendly 2048 is free software:
+ you can redistribute it and/or modify it under the terms of the
+ GNU General Public License as published by the Free Software Foundation,
+ either version 3 of the License, or any later version.
+
+ Privacy Friendly App Example is distributed in the hope
+ that it will be useful, but WITHOUT ANY WARRANTY; without even
+ the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ See the GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with Privacy Friendly App Example. If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ */
+
+package org.secuso.privacyfriendly2048.activities;
+
+import android.os.Bundle;
+import android.widget.ExpandableListView;
+
+import org.secuso.privacyfriendly2048.R;
+import org.secuso.privacyfriendly2048.activities.adapter.HelpExpandableListAdapter;
+import org.secuso.privacyfriendly2048.activities.helper.BaseActivity;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+
+/**
+ * The HelpActivity is a standard activity provided by all SECUSO apps. Here you can find some FAQs with an adequate answer.
+ * @author Julian Wadephul and Saskia Jacob
+ * @version 20180910
+ */
+<span class="fc" id="L38">public class HelpActivity extends BaseActivity {</span>
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+<span class="fc" id="L42">        super.onCreate(savedInstanceState);</span>
+<span class="fc" id="L43">        setContentView(R.layout.activity_help);</span>
+
+<span class="fc" id="L45">        LinkedHashMap&lt;String, List&lt;String&gt;&gt; expandableListDetail = buildData();</span>
+
+<span class="fc" id="L47">        ExpandableListView generalExpandableListView = findViewById(R.id.generalExpandableListView);</span>
+<span class="fc" id="L48">        generalExpandableListView.setAdapter(new HelpExpandableListAdapter(this, new ArrayList&lt;&gt;(expandableListDetail.keySet()), expandableListDetail));</span>
+
+<span class="fc" id="L50">        overridePendingTransition(0, 0);</span>
+<span class="fc" id="L51">    }</span>
+
+    private LinkedHashMap&lt;String, List&lt;String&gt;&gt; buildData() {
+<span class="fc" id="L54">        LinkedHashMap&lt;String, List&lt;String&gt;&gt; expandableListDetail = new LinkedHashMap&lt;String, List&lt;String&gt;&gt;();</span>
+
+<span class="fc" id="L56">        expandableListDetail.put(getString(R.string.help_whatis), Collections.singletonList(getString(R.string.help_whatis_answer)));</span>
+<span class="fc" id="L57">        expandableListDetail.put(getString(R.string.help_privacy), Collections.singletonList(getString(R.string.help_privacy_answer)));</span>
+<span class="fc" id="L58">        expandableListDetail.put(getString(R.string.help_permission), Collections.singletonList(getString(R.string.help_permission_answer)));</span>
+<span class="fc" id="L59">        expandableListDetail.put(getString(R.string.help_play), Collections.singletonList(getString(R.string.help_play_answer)));</span>
+<span class="fc" id="L60">        expandableListDetail.put(getString(R.string.help_play_how), Collections.singletonList(getString(R.string.help_play_how_answer)));</span>
+<span class="fc" id="L61">        expandableListDetail.put(getString(R.string.help_play_add), Collections.singletonList(getString(R.string.help_play_add_answer)));</span>
+<span class="fc" id="L62">        expandableListDetail.put(getString(R.string.help_tip), Collections.singletonList(getString(R.string.help_tip_answer)));</span>
+<span class="fc" id="L63">        expandableListDetail.put(getString(R.string.help_undo), Collections.singletonList(getString(R.string.help_undo_answer)));</span>
+<span class="fc" id="L64">        expandableListDetail.put(getString(R.string.help_color), Collections.singletonList(getString(R.string.help_color_answer)));</span>
+
+
+
+<span class="fc" id="L68">        return expandableListDetail;</span>
+    }
+
+    protected int getNavigationDrawerID() {
+<span class="fc" id="L72">        return R.id.nav_help;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>Generated by the Android Gradle plugin 7.3.1</div></body></html>

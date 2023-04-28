@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TutorialActivity.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=0;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">debug</a> &gt; <a href="index.source.html" class="el_package">org.secuso.privacyfriendly2048.activities</a> &gt; <span class="el_source">TutorialActivity.java</span></div><h1>TutorialActivity.java</h1><pre class="source lang-java linenums">/*
+ This file is part of Privacy Friendly 2048. This app implements the functions of the
+ game 2048 in a privacy friendly version.
+
+ Privacy Friendly 2048 is free software:
+ you can redistribute it and/or modify it under the terms of the
+ GNU General Public License as published by the Free Software Foundation,
+ either version 3 of the License, or any later version.
+
+ Privacy Friendly App Example is distributed in the hope
+ that it will be useful, but WITHOUT ANY WARRANTY; without even
+ the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ See the GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with Privacy Friendly App Example. If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ */
+
+package org.secuso.privacyfriendly2048.activities;
+
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Color;
+import android.os.Build;
+import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.support.v7.app.AppCompatActivity;
+import android.text.Html;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+
+import com.bumptech.glide.Glide;
+
+import org.secuso.privacyfriendly2048.R;
+import org.secuso.privacyfriendly2048.helpers.FirstLaunchManager;
+
+/**
+ * In this activity a ViewPager is filled with the four pages of the tutorial.
+ * The buttons at the bottom differ depending on the current position in the ViewPager.
+ *
+ * @author Julian Wadephul and Saskia Jacob
+ * @version 20180910
+ */
+<span class="fc" id="L56">public class TutorialActivity extends AppCompatActivity {</span>
+
+    private ViewPager viewPager;
+    private MyViewPagerAdapter myViewPagerAdapter;
+    private LinearLayout dotsLayout;
+    private TextView[] dots;
+    private Button btnSkip, btnNext;
+    private FirstLaunchManager firstLaunchManager;
+
+    // layouts of all welcome sliders
+    // add few more layouts if you want
+<span class="fc" id="L67">    private int[] layouts = new int[]{</span>
+            R.layout.tutorial_slide1,
+            R.layout.tutorial_slide2,
+            R.layout.tutorial_slide3,
+            R.layout.tutorial_slide4,
+    };
+
+<span class="fc" id="L74">    private static final String TAG = TutorialActivity.class.getSimpleName();</span>
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+<span class="fc" id="L78">        super.onCreate(savedInstanceState);</span>
+
+<span class="fc" id="L80">        setContentView(R.layout.activity_tutorial);</span>
+
+        // Making notification bar transparent
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">        if (Build.VERSION.SDK_INT &gt;= 21) {</span>
+<span class="fc" id="L84">            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);</span>
+        }
+
+<span class="fc" id="L87">        firstLaunchManager = new FirstLaunchManager(this);</span>
+
+<span class="fc" id="L89">        viewPager = (ViewPager) findViewById(R.id.view_pager);</span>
+<span class="fc" id="L90">        dotsLayout = (LinearLayout) findViewById(R.id.layoutDots);</span>
+<span class="fc" id="L91">        btnSkip = (Button) findViewById(R.id.btn_skip);</span>
+<span class="fc" id="L92">        btnNext = (Button) findViewById(R.id.btn_next);</span>
+
+
+
+        // adding bottom dots
+<span class="fc" id="L97">        addBottomDots(0);</span>
+
+        // making notification bar transparent
+<span class="fc" id="L100">        changeStatusBarColor();</span>
+
+<span class="fc" id="L102">        myViewPagerAdapter = new MyViewPagerAdapter();</span>
+<span class="fc" id="L103">        viewPager.setAdapter(myViewPagerAdapter);</span>
+<span class="fc" id="L104">        viewPager.addOnPageChangeListener(viewPagerPageChangeListener);</span>
+
+
+        try {
+<span class="fc" id="L108">            ImageView imageView = (ImageView) findViewById(R.id.image1);</span>
+<span class="nc" id="L109">            Glide.with(TutorialActivity.this).load(R.mipmap.ic_splash).into(imageView);//.into(imageView);//@mipmap/ic_splash).into(imageView);</span>
+        }
+<span class="fc" id="L111">        catch(NullPointerException ne)</span>
+        {
+
+<span class="nc" id="L114">        }</span>
+
+<span class="fc" id="L116">        btnSkip.setOnClickListener(new View.OnClickListener() {</span>
+            @Override
+            public void onClick(View v) {
+<span class="fc" id="L119">                launchHomeScreen();</span>
+<span class="fc" id="L120">            }</span>
+        });
+
+<span class="fc" id="L123">        btnNext.setOnClickListener(new View.OnClickListener() {</span>
+            @Override
+            public void onClick(View v) {
+                // checking for last page
+                // if last page home screen will be launched
+<span class="fc" id="L128">                int current = getItem(+1);</span>
+<span class="fc bfc" id="L129" title="All 2 branches covered.">                if (current &lt; layouts.length) {</span>
+                    // move to next screen
+<span class="fc" id="L131">                    viewPager.setCurrentItem(current);</span>
+                } else {
+<span class="fc" id="L133">                    launchHomeScreen();</span>
+                }
+<span class="fc" id="L135">            }</span>
+        });
+<span class="fc" id="L137">    }</span>
+
+    private void addBottomDots(int currentPage) {
+<span class="fc" id="L140">        dots = new TextView[layouts.length];</span>
+
+<span class="fc" id="L142">        int activeColor = ContextCompat.getColor(this, R.color.dot_light_screen);</span>
+<span class="fc" id="L143">        int inactiveColor = ContextCompat.getColor(this, R.color.dot_dark_screen);</span>
+
+<span class="fc" id="L145">        dotsLayout.removeAllViews();</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">        for (int i = 0; i &lt; dots.length; i++) {</span>
+<span class="fc" id="L147">            dots[i] = new TextView(this);</span>
+<span class="fc" id="L148">            dots[i].setText(Html.fromHtml(&quot;&amp;#8226;&quot;));</span>
+<span class="fc" id="L149">            dots[i].setTextSize(35);</span>
+<span class="fc" id="L150">            dots[i].setTextColor(inactiveColor);</span>
+<span class="fc" id="L151">            dotsLayout.addView(dots[i]);</span>
+        }
+
+<span class="pc bpc" id="L154" title="1 of 2 branches missed.">        if (dots.length &gt; 0)</span>
+<span class="fc" id="L155">            dots[currentPage].setTextColor(activeColor);</span>
+<span class="fc" id="L156">    }</span>
+
+    private int getItem(int i) {
+<span class="fc" id="L159">        return viewPager.getCurrentItem() + i;</span>
+    }
+
+    private void launchHomeScreen() {
+<span class="fc bfc" id="L163" title="All 2 branches covered.">        if(firstLaunchManager.isFirstTimeLaunch()) {</span>
+<span class="fc" id="L164">            Intent intent = new Intent(TutorialActivity.this, MainActivity.class);</span>
+<span class="fc" id="L165">            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);</span>
+<span class="fc" id="L166">            firstLaunchManager.setFirstTimeLaunch(false);</span>
+<span class="fc" id="L167">            startActivity(intent);</span>
+        }
+<span class="fc" id="L169">        finish();</span>
+<span class="fc" id="L170">    }</span>
+
+    //  viewpager change listener
+<span class="fc" id="L173">    ViewPager.OnPageChangeListener viewPagerPageChangeListener = new ViewPager.OnPageChangeListener() {</span>
+
+        @Override
+        public void onPageSelected(int position) {
+
+
+<span class="fc" id="L179">            addBottomDots(position);</span>
+
+            // changing the next button text 'NEXT' / 'GOT IT'
+<span class="fc bfc" id="L182" title="All 2 branches covered.">            if (position == layouts.length - 1) {</span>
+                // last page. make button text to GOT IT
+<span class="fc" id="L184">                btnNext.setText(getString(R.string.okay));</span>
+<span class="fc" id="L185">                btnSkip.setVisibility(View.GONE);</span>
+            } else {
+                // still pages are left
+<span class="fc" id="L188">                btnNext.setText(getString(R.string.next));</span>
+<span class="fc" id="L189">                btnSkip.setVisibility(View.VISIBLE);</span>
+            }
+<span class="fc" id="L191">        }</span>
+
+        @Override
+        public void onPageScrolled(int arg0, float arg1, int arg2) {
+<span class="fc" id="L195">        }</span>
+
+        @Override
+        public void onPageScrollStateChanged(int arg0) {
+
+<span class="fc" id="L200">        }</span>
+    };
+
+    /**
+     * Making notification bar transparent
+     */
+    private void changeStatusBarColor() {
+<span class="pc bpc" id="L207" title="1 of 2 branches missed.">        if (Build.VERSION.SDK_INT &gt;= Build.VERSION_CODES.LOLLIPOP) {</span>
+<span class="fc" id="L208">            Window window = getWindow();</span>
+<span class="fc" id="L209">            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);</span>
+<span class="fc" id="L210">            window.setStatusBarColor(Color.TRANSPARENT);</span>
+        }
+<span class="fc" id="L212">    }</span>
+
+    /**
+     * View pager adapter
+     */
+    public class MyViewPagerAdapter extends PagerAdapter {
+        private LayoutInflater layoutInflater;
+
+<span class="fc" id="L220">        public MyViewPagerAdapter() {</span>
+<span class="fc" id="L221">        }</span>
+
+        @Override
+        public Object instantiateItem(ViewGroup container, int position) {
+<span class="fc" id="L225">            layoutInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);</span>
+
+<span class="fc" id="L227">            View view = layoutInflater.inflate(layouts[position], container, false);</span>
+<span class="fc" id="L228">            container.addView(view);</span>
+            ImageView imageView;
+<span class="pc bpc" id="L230" title="1 of 5 branches missed.">            switch(position)</span>
+            {
+                case 0:
+<span class="fc" id="L233">                    imageView = (ImageView) findViewById(R.id.image1);</span>
+<span class="fc" id="L234">                    Glide.with(TutorialActivity.this).load(R.mipmap.ic_splash).into(imageView);</span>
+<span class="fc" id="L235">                    break;</span>
+                case 1:
+<span class="fc" id="L237">                    imageView = (ImageView) findViewById(R.id.image2);</span>
+<span class="fc bfc" id="L238" title="All 2 branches covered.">                    if(PreferenceManager.getDefaultSharedPreferences(TutorialActivity.this).getString(&quot;pref_color&quot;,&quot;1&quot;).equals(&quot;1&quot;))</span>
+<span class="fc" id="L239">                        Glide.with(TutorialActivity.this).load(R.drawable.tutorial_move_s).into(imageView);</span>
+                    else
+<span class="fc" id="L241">                        Glide.with(TutorialActivity.this).load(R.drawable.tutorial_move_o).into(imageView);</span>
+<span class="fc" id="L242">                    break;</span>
+                case 2:
+<span class="fc" id="L244">                    imageView = (ImageView) findViewById(R.id.image3);</span>
+<span class="fc bfc" id="L245" title="All 2 branches covered.">                    if(PreferenceManager.getDefaultSharedPreferences(TutorialActivity.this).getString(&quot;pref_color&quot;,&quot;1&quot;).equals(&quot;1&quot;))</span>
+<span class="fc" id="L246">                        Glide.with(TutorialActivity.this).load(R.drawable.tutorial_swipe_s).into(imageView);</span>
+                    else
+<span class="fc" id="L248">                        Glide.with(TutorialActivity.this).load(R.drawable.tutorial_swipe_o).into(imageView);</span>
+<span class="fc" id="L249">                    break;</span>
+                case 3:
+<span class="fc" id="L251">                    imageView = (ImageView) findViewById(R.id.image4);</span>
+<span class="fc bfc" id="L252" title="All 2 branches covered.">                    if(PreferenceManager.getDefaultSharedPreferences(TutorialActivity.this).getString(&quot;pref_color&quot;,&quot;1&quot;).equals(&quot;1&quot;))</span>
+<span class="fc" id="L253">                        Glide.with(TutorialActivity.this).load(R.drawable.tutorial_add_s).into(imageView);</span>
+                    else
+<span class="fc" id="L255">                        Glide.with(TutorialActivity.this).load(R.drawable.tutorial_add_o).into(imageView);</span>
+                    break;
+            }
+<span class="fc" id="L258">            return view;</span>
+        }
+
+        @Override
+        public int getCount() {
+<span class="fc" id="L263">            return layouts.length;</span>
+        }
+
+        @Override
+        public boolean isViewFromObject(View view, Object obj) {
+<span class="fc bfc" id="L268" title="All 2 branches covered.">            return view == obj;</span>
+        }
+
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+<span class="fc" id="L274">            View view = (View) object;</span>
+<span class="fc" id="L275">            container.removeView(view);</span>
+<span class="fc" id="L276">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>Generated by the Android Gradle plugin 7.3.1</div></body></html>

@@ -1,0 +1,1229 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GameActivity.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=0;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">debug</a> &gt; <a href="index.source.html" class="el_package">org.secuso.privacyfriendly2048.activities</a> &gt; <span class="el_source">GameActivity.java</span></div><h1>GameActivity.java</h1><pre class="source lang-java linenums">/*
+ This file is part of Privacy Friendly 2048. This app implements the functions of the
+ game 2048 in a privacy friendly version.
+
+ Privacy Friendly 2048 is free software:
+ you can redistribute it and/or modify it under the terms of the
+ GNU General Public License as published by the Free Software Foundation,
+ either version 3 of the License, or any later version.
+
+ Privacy Friendly App Example is distributed in the hope
+ that it will be useful, but WITHOUT ANY WARRANTY; without even
+ the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ See the GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with Privacy Friendly App Example. If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ */
+
+package org.secuso.privacyfriendly2048.activities;
+
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.res.Configuration;
+import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.animation.LinearInterpolator;
+import android.widget.ImageButton;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
+import org.secuso.privacyfriendly2048.R;
+import org.secuso.privacyfriendly2048.activities.helper.BaseActivityWithoutNavBar;
+import org.secuso.privacyfriendly2048.activities.helper.GameState;
+import org.secuso.privacyfriendly2048.activities.helper.GameStatistics;
+import org.secuso.privacyfriendly2048.activities.helper.Gestures;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.Calendar;
+
+/**
+ * This activity contains the entire game and draws the game field depending on the selected mode and the screen size.
+ * Also the Intent influences, when a new game is generated or a previous game status is loaded.
+ * Therefore a two dimensional field named elements is filled with instances of the class Element depending on the selected mode (4x4, 5x5, 6x6, 7x7).
+ * The function of the two buttons restart and undo are also implemented.
+ * With the help of the class Gesture the user inputs are recognized and the corresponding method is retrieved.
+ * This method contains the important game logic for 2048.
+ * With loops the values of the elements will be added and the whole elements will be moved in the selected direction.
+ * After each move (only if something has been moved) a new element appears on the game field with the help of the method addNumber().
+ * This new element is placed randomly on a free spot of the game field.
+ * If the activity is paused or stopped, the game status is saved in the GameState and the GameStatistics will be updated.
+ *
+ * @author Julian Wadephul and Saskia Jacob
+ * @version 20180910
+ */
+
+@SuppressWarnings(&quot;StringConcatenationInLoop&quot;)
+<span class="fc" id="L73">public class GameActivity extends BaseActivityWithoutNavBar {</span>
+<span class="fc" id="L74">    public static int n = 4;</span>
+    public TextView textFieldPoints;
+    public TextView textFieldRecord;
+<span class="fc" id="L77">    public int numberFieldSize = 0;</span>
+<span class="fc" id="L78">    static Element[][] elements = null;</span>
+<span class="fc" id="L79">    static Element[][] last_elements = null;</span>
+    static Element[][] backgroundElements;
+<span class="fc" id="L81">    static GameState gameState = null;</span>
+
+    RelativeLayout number_field;
+    RelativeLayout number_field_background;
+    RelativeLayout touch_field;
+    ImageButton restartButton;
+    ImageButton undoButton;
+<span class="fc" id="L88">    public static int points = 0;</span>
+<span class="fc" id="L89">    public static int last_points = 0;</span>
+<span class="fc" id="L90">    public static long record = 0;</span>
+
+<span class="fc" id="L92">    public static long ADDINGSPEED = 100;</span>
+<span class="fc" id="L93">    public static long MOVINGSPEED = 80;</span>
+<span class="fc" id="L94">    public static long SCALINGSPEED = 100;</span>
+<span class="fc" id="L95">    public static float SCALINGFACTOR = 1.1f;</span>
+
+<span class="fc" id="L97">    public static boolean moved = false;</span>
+<span class="fc" id="L98">    public static boolean firstTime = true;</span>
+    public static boolean newGame;
+<span class="fc" id="L100">    public boolean won2048=false;</span>
+<span class="fc" id="L101">    public static boolean gameOver = false;</span>
+<span class="fc" id="L102">    public static boolean createNewGame = true;</span>
+<span class="fc" id="L103">    public static boolean undo = false;</span>
+<span class="fc" id="L104">    public static boolean animationActivated = true;</span>
+<span class="fc" id="L105">    public static boolean saveState = true;</span>
+
+<span class="fc" id="L107">    public final int WINTHRESHOLD = 2048;</span>
+<span class="fc" id="L108">    public final double PROPABILITYFORTWO = 0.9;</span>
+    View.OnTouchListener swipeListener;
+
+
+    static String filename;
+
+    SharedPreferences sharedPref;
+
+<span class="fc" id="L116">    GameStatistics gameStatistics = new GameStatistics(n);</span>
+    public static long startingTime;
+    public int highestNumber;
+
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+<span class="fc" id="L123">        MenuItem item= menu.findItem(R.id.action_settings);</span>
+<span class="fc" id="L124">        item.setVisible(false);</span>
+<span class="fc" id="L125">        super.onPrepareOptionsMenu(menu);</span>
+<span class="fc" id="L126">        return true;</span>
+    }
+
+    @Override
+    public void onPause() {
+<span class="fc" id="L131">        Log.i(&quot;lifecycle&quot;,&quot;pause&quot;);</span>
+<span class="fc" id="L132">        save();</span>
+
+<span class="fc" id="L134">        super.onPause();</span>
+
+<span class="fc" id="L136">    }</span>
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+<span class="fc" id="L140">        super.onCreate(savedInstanceState);</span>
+
+<span class="fc" id="L142">        saveState = true;</span>
+
+<span class="pc bpc" id="L144" title="1 of 2 branches missed.">        if(savedInstanceState == null) {</span>
+<span class="fc" id="L145">            Intent intent = getIntent();</span>
+<span class="pc bpc" id="L146" title="1 of 4 branches missed.">            if (firstTime &amp;&amp; intent.getBooleanExtra(&quot;new&quot;, true)) {</span>
+<span class="fc" id="L147">                createNewGame = true;</span>
+<span class="fc" id="L148">                firstTime = false;</span>
+            }
+        }
+
+<span class="fc" id="L152">        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);</span>
+<span class="fc" id="L153">        animationActivated = sharedPref.getBoolean(&quot;pref_animationActivated&quot;,true);</span>
+
+<span class="pc bpc" id="L155" title="1 of 2 branches missed.">        if(sharedPref.getBoolean(&quot;settings_display&quot;,true))</span>
+<span class="fc" id="L156">            getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);</span>
+<span class="fc" id="L157">        setContentView(R.layout.activity_game);</span>
+
+<span class="fc" id="L159">        initResources();</span>
+
+<span class="fc" id="L161">    }</span>
+
+    public void initResources() {
+<span class="fc" id="L164">        number_field = (RelativeLayout) findViewById(R.id.number_field);</span>
+<span class="fc" id="L165">        number_field_background = (RelativeLayout) findViewById(R.id.number_field_background);</span>
+<span class="fc" id="L166">        touch_field = (RelativeLayout) findViewById(R.id.touch_field) ;</span>
+<span class="fc" id="L167">        textFieldPoints = (TextView) findViewById(R.id.points);</span>
+<span class="fc" id="L168">        textFieldRecord = (TextView) findViewById(R.id.record);</span>
+<span class="fc" id="L169">        restartButton = (ImageButton) findViewById(R.id.restartButton);</span>
+<span class="fc" id="L170">        restartButton.setOnClickListener(new View.OnClickListener() {</span>
+            @Override
+            public void onClick(View v) {
+<span class="fc" id="L173">                saveStatisticsToFile(gameStatistics);</span>
+<span class="fc" id="L174">                createNewGame();</span>
+<span class="fc" id="L175">            }</span>
+        });
+<span class="fc" id="L177">        undoButton = (ImageButton) findViewById(R.id.undoButton);</span>
+<span class="fc" id="L178">        undoButton.setOnClickListener(new View.OnClickListener() {</span>
+            @Override
+            public void onClick(View v) {
+<span class="fc" id="L181">                undoButton.setVisibility(View.INVISIBLE);</span>
+<span class="pc bpc" id="L182" title="2 of 4 branches missed.">                if(undo&amp;&amp;last_elements != null) {</span>
+<span class="fc" id="L183">                    gameStatistics.undo();</span>
+<span class="fc" id="L184">                    elements = last_elements;</span>
+<span class="fc" id="L185">                    points = last_points;</span>
+<span class="fc" id="L186">                    number_field.removeAllViews();</span>
+                    //number_field_background.removeAllViews();
+<span class="fc" id="L188">                    points = last_points;</span>
+<span class="fc" id="L189">                    textFieldPoints.setText(&quot;&quot;+points);</span>
+<span class="fc" id="L190">                    setDPositions(false);</span>
+<span class="fc bfc" id="L191" title="All 2 branches covered.">                    for(Element[] i : elements)</span>
+                    {
+<span class="fc bfc" id="L193" title="All 2 branches covered.">                        for(Element j: i)</span>
+                        {
+<span class="fc" id="L195">                            j.setVisibility(View.INVISIBLE);</span>
+<span class="fc" id="L196">                            number_field.addView(j);</span>
+<span class="fc" id="L197">                            j.drawItem();</span>
+                        }
+                    }
+<span class="fc bfc" id="L200" title="All 2 branches covered.">                    for(int i = 0; i &lt; elements.length; i++) {</span>
+<span class="fc bfc" id="L201" title="All 2 branches covered.">                        for (int j = 0; j &lt; elements[i].length; j++) {</span>
+<span class="fc" id="L202">                            elements[i][j].setOnTouchListener(swipeListener);</span>
+<span class="fc" id="L203">                            backgroundElements[i][j].setOnTouchListener(swipeListener);</span>
+                        }
+                    }
+<span class="fc" id="L206">                    updateGameState();</span>
+<span class="fc" id="L207">                    drawAllElements(elements);</span>
+<span class="fc" id="L208">                    number_field.refreshDrawableState();</span>
+                }
+<span class="fc" id="L210">                undo = false;</span>
+<span class="fc" id="L211">            }</span>
+        });
+
+        //number_field.setBackgroundColor((this.getResources().getColor(R.color.background_gamebord)));
+<span class="fc" id="L215">        startingTime = Calendar.getInstance().getTimeInMillis();</span>
+<span class="fc" id="L216">    }</span>
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        // TODO Auto-generated method stub
+<span class="nc" id="L221">        createNewGame = false;</span>
+<span class="nc" id="L222">        super.onConfigurationChanged(newConfig);</span>
+<span class="nc" id="L223">    }</span>
+
+    public void save()
+    {
+<span class="fc" id="L227">        Log.i(&quot;saving&quot;,&quot;save&quot;);</span>
+<span class="pc bpc" id="L228" title="1 of 2 branches missed.">        if(!createNewGame)</span>
+<span class="fc" id="L229">            saveStateToFile(gameState);</span>
+<span class="fc" id="L230">        gameStatistics.addTimePlayed(Calendar.getInstance().getTimeInMillis()-startingTime);</span>
+<span class="fc" id="L231">        startingTime = Calendar.getInstance().getTimeInMillis();</span>
+<span class="fc" id="L232">        saveStatisticsToFile(gameStatistics);</span>
+<span class="fc" id="L233">        firstTime = true;</span>
+<span class="fc" id="L234">    }</span>
+    @Override
+    public void onBackPressed() {
+<span class="nc" id="L237">        save();</span>
+
+<span class="nc" id="L239">        super.onBackPressed();</span>
+
+<span class="nc" id="L241">    }</span>
+
+    public void createNewGame()
+    {
+<span class="fc" id="L245">        createNewGame = true;</span>
+<span class="fc" id="L246">        getIntent().putExtra(&quot;new&quot;,true);</span>
+<span class="fc" id="L247">        number_field.removeAllViews();</span>
+<span class="fc" id="L248">        number_field_background.removeAllViews();</span>
+<span class="fc" id="L249">        initialize();</span>
+
+<span class="fc" id="L251">    }</span>
+
+    protected void start()
+    {
+<span class="fc" id="L255">        Log.i(&quot;activity&quot;,&quot;start&quot;);</span>
+<span class="fc" id="L256">        saveState = true;</span>
+<span class="fc" id="L257">        android.view.ViewGroup.LayoutParams lp = number_field.getLayoutParams();</span>
+
+        //setting squared Number Field
+<span class="fc bfc" id="L260" title="All 2 branches covered.">        if(number_field.getHeight()&gt;number_field.getWidth())</span>
+<span class="fc" id="L261">            lp.height = number_field.getWidth();</span>
+        else
+<span class="fc" id="L263">            lp.width = number_field.getHeight();</span>
+<span class="fc" id="L264">        number_field.setLayoutParams(lp);</span>
+<span class="fc" id="L265">        number_field_background.setLayoutParams(lp);</span>
+
+<span class="fc" id="L267">        initialize();</span>
+<span class="fc" id="L268">        setListener();</span>
+<span class="pc bpc" id="L269" title="1 of 2 branches missed.">        if(newGame) {</span>
+<span class="nc" id="L270">            moved = true;</span>
+<span class="nc" id="L271">            addNumber();</span>
+        }
+<span class="fc" id="L273">        newGame = false;</span>
+
+<span class="fc" id="L275">    }</span>
+    public void initializeState()
+    {
+<span class="fc" id="L278">        points = 0;</span>
+<span class="fc" id="L279">        Intent intent = getIntent();</span>
+<span class="fc" id="L280">        n = intent.getIntExtra(&quot;n&quot;, 4);</span>
+<span class="fc" id="L281">        newGame = intent.getBooleanExtra(&quot;new&quot;, true);</span>
+<span class="fc" id="L282">        filename = intent.getStringExtra(&quot;filename&quot;);</span>
+<span class="fc" id="L283">        undo = intent.getBooleanExtra(&quot;undo&quot;,false);</span>
+<span class="pc bpc" id="L284" title="1 of 2 branches missed.">        if (!newGame) {</span>
+<span class="nc" id="L285">            gameState = readStateFromFile();</span>
+<span class="nc" id="L286">            points = gameState.points;</span>
+<span class="nc" id="L287">            last_points = gameState.last_points;</span>
+        } else {
+<span class="fc" id="L289">            gameState = new GameState(n);</span>
+<span class="fc" id="L290">            newGame = true;</span>
+        }
+<span class="fc" id="L292">        elements = new Element[n][n];</span>
+<span class="fc" id="L293">        last_elements = new Element[n][n];</span>
+<span class="fc" id="L294">        backgroundElements = new Element[n][n];</span>
+<span class="fc" id="L295">        saveState = true;</span>
+<span class="fc" id="L296">    }</span>
+
+    public void drawAllElements(Element[][] e)
+    {
+<span class="fc bfc" id="L300" title="All 2 branches covered.">        for(Element[] i : e)</span>
+        {
+<span class="fc bfc" id="L302" title="All 2 branches covered.">            for(Element j: i)</span>
+            {
+<span class="fc" id="L304">                j.drawItem();</span>
+            }
+        }
+<span class="fc" id="L307">    }</span>
+
+    public void updateGameState()
+    {
+<span class="fc" id="L311">        gameState = new GameState(elements,last_elements);</span>
+<span class="fc" id="L312">        gameState.n = n;</span>
+<span class="fc" id="L313">        gameState.points = points;</span>
+<span class="fc" id="L314">        gameState.last_points = last_points;</span>
+<span class="fc" id="L315">        gameState.undo = undo;</span>
+<span class="fc" id="L316">        updateHighestNumber();</span>
+<span class="fc" id="L317">        check2048();</span>
+
+<span class="fc" id="L319">    }</span>
+
+    public void initialize()
+    {
+<span class="fc" id="L323">        Log.i(&quot;activity&quot;,&quot;initialize&quot;);</span>
+<span class="fc bfc" id="L324" title="All 4 branches covered.">        if(getIntent().getIntExtra(&quot;n&quot;,4)!=n||createNewGame)</span>
+        {
+<span class="fc" id="L326">            initializeState();</span>
+
+        }
+<span class="fc" id="L329">        gameStatistics = readStatisticsFromFile();</span>
+<span class="fc" id="L330">        record = gameStatistics.getRecord();</span>
+<span class="fc" id="L331">        last_points = gameState.last_points;</span>
+<span class="fc" id="L332">        createNewGame = false;</span>
+<span class="fc" id="L333">        DisplayMetrics metrics = new DisplayMetrics();</span>
+<span class="fc" id="L334">        getWindowManager().getDefaultDisplay().getMetrics(metrics);</span>
+<span class="fc" id="L335">        int abstand = (10* metrics.densityDpi) / DisplayMetrics.DENSITY_DEFAULT;</span>
+<span class="fc" id="L336">        numberFieldSize = number_field.getWidth();</span>
+<span class="pc bpc" id="L337" title="1 of 2 branches missed.">        if(numberFieldSize&gt;number_field.getHeight())</span>
+<span class="nc" id="L338">            numberFieldSize = number_field.getHeight();</span>
+<span class="fc" id="L339">        int number_size = (numberFieldSize-abstand)/n-abstand;</span>
+
+<span class="fc" id="L341">        textFieldRecord.setText(&quot;&quot;+record);</span>
+<span class="fc" id="L342">        textFieldPoints.setText(&quot;&quot;+points);</span>
+<span class="fc bfc" id="L343" title="All 2 branches covered.">        if(undo)</span>
+<span class="fc" id="L344">            undoButton.setVisibility(View.VISIBLE);</span>
+        else
+<span class="fc" id="L346">            undoButton.setVisibility(View.INVISIBLE);</span>
+
+<span class="fc" id="L348">        number_field_background.removeAllViews();</span>
+<span class="fc" id="L349">        number_field.removeAllViews();</span>
+<span class="fc bfc" id="L350" title="All 2 branches covered.">        for(int i = 0; i &lt; elements.length; i++) {</span>
+<span class="fc bfc" id="L351" title="All 2 branches covered.">            for (int j = 0; j &lt; elements[i].length; j++) {</span>
+                //background elements
+<span class="fc" id="L353">                backgroundElements[i][j] = new Element(this);</span>
+                //backgroundElements[i][j].setVisibility(View.INVISIBLE);
+
+<span class="fc" id="L356">                elements[i][j] = new Element(this);</span>
+<span class="fc" id="L357">                elements[i][j].setNumber(gameState.getNumber(i,j));</span>
+
+<span class="fc" id="L359">                elements[i][j].drawItem();</span>
+<span class="pc bpc" id="L360" title="1 of 2 branches missed.">                if(elements[i][j].getNumber() &gt;= WINTHRESHOLD)</span>
+<span class="nc" id="L361">                    won2048 = true;</span>
+<span class="fc" id="L362">                RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(number_size ,number_size);</span>
+<span class="fc" id="L363">                lp.setMarginStart(abstand+j*(number_size+abstand));</span>
+<span class="fc" id="L364">                lp.topMargin = abstand+i*(number_size+abstand);</span>
+<span class="fc" id="L365">                elements[i][j].setDPosition(lp.getMarginStart(),lp.topMargin);</span>
+<span class="fc" id="L366">                elements[i][j].setLayoutParams(lp);</span>
+<span class="fc" id="L367">                backgroundElements[i][j].setLayoutParams(lp);</span>
+<span class="fc" id="L368">                elements[i][j].updateFontSize();</span>
+<span class="fc" id="L369">                backgroundElements[i][j].setLayoutParams(lp);</span>
+<span class="fc" id="L370">                backgroundElements[i][j].setOnTouchListener(swipeListener);</span>
+<span class="fc" id="L371">                elements[i][j].setOnTouchListener(swipeListener);</span>
+<span class="fc" id="L372">                number_field_background.addView(backgroundElements[i][j]);</span>
+<span class="fc" id="L373">                number_field.addView(elements[i][j]);</span>
+            }
+        }
+<span class="fc" id="L376">        last_elements =deepCopy(elements);</span>
+<span class="fc bfc" id="L377" title="All 2 branches covered.">        if(undo)</span>
+        {
+<span class="fc bfc" id="L379" title="All 2 branches covered.">            for(int i = 0; i &lt; elements.length; i++) {</span>
+<span class="fc bfc" id="L380" title="All 2 branches covered.">                for (int j = 0; j &lt; elements[i].length; j++) {</span>
+<span class="fc" id="L381">                    last_elements[i][j].setNumber(gameState.getLastNumber(i,j));</span>
+                }
+            }
+        }
+<span class="fc bfc" id="L385" title="All 2 branches covered.">        if(newGame)</span>
+        {
+<span class="fc" id="L387">            moved = true;</span>
+<span class="fc" id="L388">            addNumber();</span>
+<span class="fc" id="L389">            moved = true;</span>
+<span class="fc" id="L390">            addNumber();</span>
+<span class="fc" id="L391">            newGame = false;</span>
+        }
+<span class="fc" id="L393">    }</span>
+    public void switchElementPositions(Element e1, Element e2)
+    {
+<span class="fc" id="L396">        int i = e1.getdPosX();</span>
+<span class="fc" id="L397">        int j = e1.getdPosY();</span>
+
+<span class="fc" id="L399">        e1.animateMoving = true;</span>
+<span class="fc" id="L400">        e1.setDPosition(e2.getdPosX(),e2.getdPosY());</span>
+<span class="fc" id="L401">        e2.animateMoving = false;</span>
+<span class="fc" id="L402">        e2.setDPosition(i,j);</span>
+
+<span class="fc" id="L404">    }</span>
+
+    public Element[][] deepCopy(Element[][]e)
+    {
+<span class="fc" id="L408">        Element[][] r = new Element[e.length][];</span>
+<span class="fc bfc" id="L409" title="All 2 branches covered.">        for(int i = 0; i &lt; r.length; i++)</span>
+        {
+<span class="fc" id="L411">            r[i] = new Element[e[i].length];</span>
+<span class="fc bfc" id="L412" title="All 2 branches covered.">            for(int j = 0; j &lt; r[i].length; j++)</span>
+            {
+<span class="fc" id="L414">                r[i][j] = e[i][j].copy();</span>
+            }
+        }
+<span class="fc" id="L417">        return r;</span>
+    }
+
+    public void setListener()
+    {
+<span class="fc" id="L422">        swipeListener = new Gestures(this){</span>
+            public boolean onSwipeTop() {
+<span class="fc" id="L424">                Element[][] temp = deepCopy(elements);</span>
+<span class="fc" id="L425">                int temp_points = points;</span>
+<span class="fc" id="L426">                moved = false;</span>
+<span class="fc" id="L427">                Element s = new Element(getApplicationContext());</span>
+
+<span class="fc bfc" id="L429" title="All 2 branches covered.">                for(int i = 0; i &lt; elements.length; i++)</span>
+                {
+<span class="fc" id="L431">                    s.number =  elements[0][i].number;</span>
+<span class="fc" id="L432">                    s.posX = 0;</span>
+<span class="fc" id="L433">                    s.posY = i;</span>
+
+
+<span class="fc bfc" id="L436" title="All 2 branches covered.">                    for(int j = 1; j&lt; elements[i].length; j++)</span>
+                    {
+<span class="fc bfc" id="L438" title="All 6 branches covered.">                        if(elements[j][i].number != 0 &amp;&amp;( s.number == 0 || s.number == elements[j][i].number))</span>
+                        {
+<span class="fc" id="L440">                            moved=true;</span>
+<span class="fc" id="L441">                            elements[j][i].setNumber(s.number + elements[j][i].number);</span>
+<span class="fc" id="L442">                            elements[s.posX][s.posY].setNumber(0);</span>
+<span class="fc" id="L443">                            switchElementPositions(elements[j][i], elements[s.posX][s.posY]);</span>
+<span class="fc" id="L444">                            Element z = elements[j][i];</span>
+<span class="fc" id="L445">                            elements[j][i] = elements[s.posX][s.posY];</span>
+<span class="fc" id="L446">                            elements[s.posX][s.posY] = z;</span>
+<span class="fc bfc" id="L447" title="All 2 branches covered.">                            if(s.number!=0)</span>
+<span class="fc" id="L448">                                points += elements[s.posX][s.posY].number;</span>
+<span class="fc bfc" id="L449" title="All 2 branches covered.">                            if(s.number !=0)</span>
+<span class="fc" id="L450">                                s.posX++;</span>
+<span class="fc" id="L451">                            j=s.posX;</span>
+<span class="fc" id="L452">                            s.number = elements[j][i].number;</span>
+
+<span class="fc" id="L454">                        }</span>
+<span class="fc bfc" id="L455" title="All 2 branches covered.">                        else if(elements[j][i].number != 0)</span>
+                        {
+<span class="fc" id="L457">                            s.number = elements[j][i].number;</span>
+<span class="fc" id="L458">                            s.posX = j;</span>
+<span class="fc" id="L459">                            s.posY = i;</span>
+                        }
+                    }
+
+                }
+<span class="fc bfc" id="L464" title="All 2 branches covered.">                for(int i = 0; i &lt; elements.length; i++)</span>
+                {
+<span class="fc" id="L466">                    s.number =  elements[0][i].number;</span>
+<span class="fc" id="L467">                    s.posX = 0;</span>
+<span class="fc" id="L468">                    s.posY = i;</span>
+
+
+<span class="fc bfc" id="L471" title="All 2 branches covered.">                    for(int j = 1; j&lt; elements[i].length; j++)</span>
+                    {
+<span class="fc bfc" id="L473" title="All 4 branches covered.">                        if(elements[j][i].number != 0 &amp;&amp; s.number == 0)</span>
+                        {
+<span class="fc" id="L475">                            moved=true;</span>
+<span class="fc" id="L476">                            elements[j][i].setNumber(s.number + elements[j][i].number);</span>
+<span class="fc" id="L477">                            elements[s.posX][s.posY].setNumber(0);</span>
+<span class="fc" id="L478">                            switchElementPositions(elements[j][i], elements[s.posX][s.posY]);</span>
+<span class="fc" id="L479">                            Element z = elements[j][i];</span>
+<span class="fc" id="L480">                            elements[j][i] = elements[s.posX][s.posY];</span>
+<span class="fc" id="L481">                            elements[s.posX][s.posY] = z;</span>
+<span class="pc bpc" id="L482" title="1 of 2 branches missed.">                            if(s.number !=0)</span>
+<span class="nc" id="L483">                                s.posX++;</span>
+<span class="fc" id="L484">                            j=s.posX;</span>
+<span class="fc" id="L485">                            s.number = elements[j][i].number;</span>
+
+<span class="fc" id="L487">                        }</span>
+<span class="fc bfc" id="L488" title="All 2 branches covered.">                        else if(s.number != 0)</span>
+                        {
+<span class="fc" id="L490">                            s.number = elements[j][i].number;</span>
+<span class="fc" id="L491">                            s.posX = j;</span>
+<span class="fc" id="L492">                            s.posY = i;</span>
+                        }
+                    }
+
+                }
+<span class="fc bfc" id="L497" title="All 2 branches covered.">                if(moved) {</span>
+<span class="fc" id="L498">                    gameStatistics.addMoves(1);</span>
+<span class="fc" id="L499">                    last_points = temp_points;</span>
+<span class="fc" id="L500">                    last_elements = temp;</span>
+<span class="fc" id="L501">                    undoButton.setVisibility(View.VISIBLE);</span>
+<span class="fc" id="L502">                    undo = true;</span>
+                }
+<span class="fc bfc" id="L504" title="All 2 branches covered.">                if(moved)</span>
+<span class="fc" id="L505">                    gameStatistics.moveT();</span>
+<span class="fc" id="L506">                addNumber();</span>
+<span class="fc" id="L507">                setDPositions(animationActivated);</span>
+<span class="fc" id="L508">                updateGameState();</span>
+                //es wurde nach oben gewischt, hier den Code einfügen
+<span class="fc" id="L510">                return false;</span>
+            }
+            public boolean onSwipeRight() {
+<span class="fc" id="L513">                Element[][] temp = deepCopy(elements);</span>
+<span class="fc" id="L514">                int temp_points = points;</span>
+<span class="fc" id="L515">                moved = false;</span>
+<span class="fc" id="L516">                Element s = new Element(getApplicationContext());</span>
+<span class="fc bfc" id="L517" title="All 2 branches covered.">                for(int i = 0; i &lt; elements.length; i++)</span>
+                {
+<span class="fc" id="L519">                    s.number =  elements[i][elements[i].length-1].number;</span>
+<span class="fc" id="L520">                    s.posX = i;</span>
+<span class="fc" id="L521">                    s.posY = elements[i].length-1;</span>
+
+
+<span class="fc bfc" id="L524" title="All 2 branches covered.">                    for(int j = elements[i].length-2; j &gt;= 0; j--)</span>
+                    {
+<span class="fc bfc" id="L526" title="All 6 branches covered.">                        if(elements[i][j].number != 0 &amp;&amp;( s.number == 0 || s.number == elements[i][j].number))</span>
+                        {
+<span class="fc" id="L528">                            moved=true;</span>
+
+<span class="fc" id="L530">                            elements[i][j].setNumber(s.number + elements[i][j].number);</span>
+<span class="fc" id="L531">                            elements[s.posX][s.posY].setNumber(0);</span>
+<span class="fc" id="L532">                            switchElementPositions(elements[i][j], elements[s.posX][s.posY]);</span>
+<span class="fc" id="L533">                            Element z = elements[i][j];</span>
+<span class="fc" id="L534">                            elements[i][j] = elements[s.posX][s.posY];</span>
+<span class="fc" id="L535">                            elements[s.posX][s.posY] = z;</span>
+
+<span class="fc bfc" id="L537" title="All 2 branches covered.">                            if(s.number!=0)</span>
+<span class="fc" id="L538">                                points += elements[s.posX][s.posY].number;</span>
+<span class="fc bfc" id="L539" title="All 2 branches covered.">                            if(s.number !=0)</span>
+<span class="fc" id="L540">                                s.posY--;</span>
+<span class="fc" id="L541">                            j=s.posY;</span>
+<span class="fc" id="L542">                            s.number = elements[i][j].number;</span>
+<span class="fc" id="L543">                        }</span>
+<span class="fc bfc" id="L544" title="All 2 branches covered.">                        else if(elements[i][j].number != 0)</span>
+                        {
+<span class="fc" id="L546">                            s.number = elements[i][j].number;</span>
+<span class="fc" id="L547">                            s.posX = i;</span>
+<span class="fc" id="L548">                            s.posY = j;</span>
+                        }
+                    }
+
+                }
+<span class="fc bfc" id="L553" title="All 2 branches covered.">                for(int i = 0; i &lt; elements.length; i++)</span>
+                {
+<span class="fc" id="L555">                    s.number =  elements[i][elements[i].length-1].number;</span>
+<span class="fc" id="L556">                    s.posX = i;</span>
+<span class="fc" id="L557">                    s.posY = elements[i].length-1;</span>
+
+
+<span class="fc bfc" id="L560" title="All 2 branches covered.">                    for(int j = elements[i].length-2; j &gt;= 0; j--)</span>
+                    {
+<span class="fc bfc" id="L562" title="All 4 branches covered.">                        if(elements[i][j].number != 0 &amp;&amp; s.number == 0 )</span>
+                        {
+<span class="fc" id="L564">                            moved=true;</span>
+
+<span class="fc" id="L566">                            elements[i][j].setNumber(s.number + elements[i][j].number);</span>
+<span class="fc" id="L567">                            elements[s.posX][s.posY].setNumber(0);</span>
+<span class="fc" id="L568">                            switchElementPositions(elements[i][j], elements[s.posX][s.posY]);</span>
+<span class="fc" id="L569">                            Element z = elements[i][j];</span>
+<span class="fc" id="L570">                            elements[i][j] = elements[s.posX][s.posY];</span>
+<span class="fc" id="L571">                            elements[s.posX][s.posY] = z;</span>
+
+
+<span class="pc bpc" id="L574" title="1 of 2 branches missed.">                            if(s.number !=0)</span>
+<span class="nc" id="L575">                                s.posY--;</span>
+<span class="fc" id="L576">                            j=s.posY;</span>
+<span class="fc" id="L577">                            s.number = elements[i][j].number;</span>
+<span class="fc" id="L578">                        }</span>
+<span class="fc bfc" id="L579" title="All 2 branches covered.">                        else if(s.number != 0)</span>
+                        {
+<span class="fc" id="L581">                            s.number = elements[i][j].number;</span>
+<span class="fc" id="L582">                            s.posX = i;</span>
+<span class="fc" id="L583">                            s.posY = j;</span>
+                        }
+                    }
+
+                }
+<span class="fc bfc" id="L588" title="All 2 branches covered.">                if(moved) {</span>
+<span class="fc" id="L589">                    gameStatistics.addMoves(1);</span>
+<span class="fc" id="L590">                    last_points = temp_points;</span>
+<span class="fc" id="L591">                    last_elements = temp;</span>
+<span class="fc" id="L592">                    undoButton.setVisibility(View.VISIBLE);</span>
+<span class="fc" id="L593">                    undo = true;</span>
+                }
+<span class="fc bfc" id="L595" title="All 2 branches covered.">                if(moved)</span>
+<span class="fc" id="L596">                    gameStatistics.moveR();</span>
+<span class="fc" id="L597">                addNumber();</span>
+<span class="fc" id="L598">                setDPositions(animationActivated);</span>
+<span class="fc" id="L599">                updateGameState();</span>
+
+                //es wurde nach rechts gewischt, hier den Code einfügen
+<span class="fc" id="L602">                return false;</span>
+            }
+            public boolean onSwipeLeft() {
+<span class="fc" id="L605">                Element[][] temp = deepCopy(elements);</span>
+<span class="fc" id="L606">                int temp_points = points;</span>
+<span class="fc" id="L607">                moved = false;</span>
+<span class="fc" id="L608">                Element s = new Element(getApplicationContext());</span>
+<span class="fc bfc" id="L609" title="All 2 branches covered.">                for(int i = 0; i &lt; elements.length; i++)</span>
+                {
+<span class="fc" id="L611">                    s.number =  elements[i][0].number;</span>
+<span class="fc" id="L612">                    s.posX = i;</span>
+<span class="fc" id="L613">                    s.posY = 0;</span>
+
+
+<span class="fc bfc" id="L616" title="All 2 branches covered.">                    for(int j = 1; j&lt; elements[i].length; j++)</span>
+                    {
+<span class="fc bfc" id="L618" title="All 6 branches covered.">                        if(elements[i][j].number != 0 &amp;&amp;( s.number == 0 || s.number == elements[i][j].number))</span>
+                        {
+<span class="fc" id="L620">                            moved=true;</span>
+
+
+<span class="fc" id="L623">                            elements[i][j].setNumber(s.number + elements[i][j].number);</span>
+<span class="fc" id="L624">                            elements[s.posX][s.posY].setNumber(0);</span>
+<span class="fc" id="L625">                            switchElementPositions(elements[i][j], elements[s.posX][s.posY]);</span>
+<span class="fc" id="L626">                            Element z = elements[i][j];</span>
+<span class="fc" id="L627">                            elements[i][j] = elements[s.posX][s.posY];</span>
+<span class="fc" id="L628">                            elements[s.posX][s.posY] = z;</span>
+
+<span class="fc bfc" id="L630" title="All 2 branches covered.">                            if(s.number!=0)</span>
+<span class="fc" id="L631">                                points += elements[s.posX][s.posY].number;</span>
+<span class="fc bfc" id="L632" title="All 2 branches covered.">                            if(s.number !=0)</span>
+<span class="fc" id="L633">                                s.posY++;</span>
+<span class="fc" id="L634">                            j=s.posY;</span>
+<span class="fc" id="L635">                            s.number = elements[i][j].number;</span>
+<span class="fc" id="L636">                        }</span>
+<span class="fc bfc" id="L637" title="All 2 branches covered.">                        else if(elements[i][j].number != 0)</span>
+                        {
+<span class="fc" id="L639">                            s.number = elements[i][j].number;</span>
+<span class="fc" id="L640">                            s.posX = i;</span>
+<span class="fc" id="L641">                            s.posY = j;</span>
+                        }
+                    }
+
+                }
+<span class="fc bfc" id="L646" title="All 2 branches covered.">                for(int i = 0; i &lt; elements.length; i++)</span>
+                {
+<span class="fc" id="L648">                    s.number =  elements[i][0].number;</span>
+<span class="fc" id="L649">                    s.posX = i;</span>
+<span class="fc" id="L650">                    s.posY = 0;</span>
+
+<span class="fc bfc" id="L652" title="All 2 branches covered.">                    for(int j = 1; j&lt; elements[i].length; j++)</span>
+                    {
+<span class="fc bfc" id="L654" title="All 4 branches covered.">                        if(elements[i][j].number != 0 &amp;&amp; s.number == 0)</span>
+                        {
+<span class="fc" id="L656">                            moved=true;</span>
+
+<span class="fc" id="L658">                            elements[i][j].setNumber(s.number + elements[i][j].number);</span>
+<span class="fc" id="L659">                            elements[s.posX][s.posY].setNumber(0);</span>
+<span class="fc" id="L660">                            switchElementPositions(elements[i][j], elements[s.posX][s.posY]);</span>
+<span class="fc" id="L661">                            Element z = elements[i][j];</span>
+<span class="fc" id="L662">                            elements[i][j] = elements[s.posX][s.posY];</span>
+<span class="fc" id="L663">                            elements[s.posX][s.posY] = z;</span>
+
+<span class="pc bpc" id="L665" title="1 of 2 branches missed.">                            if(s.number !=0)</span>
+<span class="nc" id="L666">                                s.posY++;</span>
+<span class="fc" id="L667">                            j=s.posY;</span>
+<span class="fc" id="L668">                            s.number = elements[i][j].number;</span>
+<span class="fc" id="L669">                        }</span>
+<span class="fc bfc" id="L670" title="All 2 branches covered.">                        else if(s.number != 0)</span>
+                        {
+<span class="fc" id="L672">                            s.number = elements[i][j].number;</span>
+<span class="fc" id="L673">                            s.posX = i;</span>
+<span class="fc" id="L674">                            s.posY = j;</span>
+                        }
+                    }
+
+                }
+<span class="fc bfc" id="L679" title="All 2 branches covered.">                if(moved) {</span>
+<span class="fc" id="L680">                    gameStatistics.addMoves(1);</span>
+<span class="fc" id="L681">                    last_points = temp_points;</span>
+<span class="fc" id="L682">                    last_elements = temp;</span>
+<span class="fc" id="L683">                    undoButton.setVisibility(View.VISIBLE);</span>
+<span class="fc" id="L684">                    undo = true;</span>
+                }
+<span class="fc bfc" id="L686" title="All 2 branches covered.">                if(moved)</span>
+<span class="fc" id="L687">                    gameStatistics.moveL();</span>
+<span class="fc" id="L688">                addNumber();</span>
+<span class="fc" id="L689">                setDPositions(animationActivated);</span>
+<span class="fc" id="L690">                updateGameState();</span>
+                //es wurde nach links gewischt, hier den Code einfügen
+<span class="fc" id="L692">                return false;</span>
+            }
+            public boolean onSwipeBottom() {
+<span class="fc" id="L695">                Element[][] temp = deepCopy(elements);</span>
+<span class="fc" id="L696">                int temp_points = points;</span>
+<span class="fc" id="L697">                moved = false;</span>
+<span class="fc" id="L698">                Element s = new Element(getApplicationContext());</span>
+<span class="fc bfc" id="L699" title="All 2 branches covered.">                for(int i = 0; i &lt; elements.length; i++)</span>
+                {
+<span class="fc" id="L701">                    s.number =  elements[elements[i].length-1][i].number;</span>
+<span class="fc" id="L702">                    s.posX = elements[i].length-1;</span>
+<span class="fc" id="L703">                    s.posY = i;</span>
+
+
+<span class="fc bfc" id="L706" title="All 2 branches covered.">                    for(int j = elements[i].length-2; j&gt;=0; j--)</span>
+                    {
+<span class="fc bfc" id="L708" title="All 6 branches covered.">                        if(elements[j][i].number != 0 &amp;&amp;( s.number == 0 || s.number == elements[j][i].number))</span>
+                        {
+<span class="fc" id="L710">                            moved=true;</span>
+
+<span class="fc" id="L712">                            elements[j][i].setNumber(s.number + elements[j][i].number);</span>
+<span class="fc" id="L713">                            elements[s.posX][s.posY].setNumber(0);</span>
+<span class="fc" id="L714">                            switchElementPositions(elements[j][i], elements[s.posX][s.posY]);</span>
+<span class="fc" id="L715">                            Element z = elements[j][i];</span>
+<span class="fc" id="L716">                            elements[j][i] = elements[s.posX][s.posY];</span>
+<span class="fc" id="L717">                            elements[s.posX][s.posY] = z;</span>
+
+<span class="fc bfc" id="L719" title="All 2 branches covered.">                            if(s.number!=0)</span>
+<span class="fc" id="L720">                                points += elements[s.posX][s.posY].number;</span>
+<span class="fc bfc" id="L721" title="All 2 branches covered.">                            if(s.number !=0)</span>
+<span class="fc" id="L722">                                s.posX--;</span>
+<span class="fc" id="L723">                            j=s.posX;</span>
+<span class="fc" id="L724">                            s.number = elements[j][i].number;</span>
+<span class="fc" id="L725">                        }</span>
+<span class="fc bfc" id="L726" title="All 2 branches covered.">                        else if(elements[j][i].number != 0)</span>
+                        {
+<span class="fc" id="L728">                            s.number = elements[j][i].number;</span>
+<span class="fc" id="L729">                            s.posX = j;</span>
+<span class="fc" id="L730">                            s.posY = i;</span>
+                        }
+                    }
+
+                }
+<span class="fc bfc" id="L735" title="All 2 branches covered.">                for(int i = 0; i &lt; elements.length; i++)</span>
+                {
+<span class="fc" id="L737">                    s.number =  elements[elements[i].length-1][i].number;</span>
+<span class="fc" id="L738">                    s.posX = elements[i].length-1;</span>
+<span class="fc" id="L739">                    s.posY = i;</span>
+
+
+<span class="fc bfc" id="L742" title="All 2 branches covered.">                    for(int j = elements[i].length-2; j&gt;=0; j--)</span>
+                    {
+<span class="fc bfc" id="L744" title="All 4 branches covered.">                        if(elements[j][i].number != 0 &amp;&amp;s.number == 0)</span>
+                        {
+<span class="fc" id="L746">                            moved=true;</span>
+
+<span class="fc" id="L748">                            elements[j][i].setNumber(s.number + elements[j][i].number);</span>
+<span class="fc" id="L749">                            elements[s.posX][s.posY].setNumber(0);</span>
+<span class="fc" id="L750">                            switchElementPositions(elements[j][i], elements[s.posX][s.posY]);</span>
+<span class="fc" id="L751">                            Element z = elements[j][i];</span>
+<span class="fc" id="L752">                            elements[j][i] = elements[s.posX][s.posY];</span>
+<span class="fc" id="L753">                            elements[s.posX][s.posY] = z;</span>
+
+<span class="pc bpc" id="L755" title="1 of 2 branches missed.">                            if(s.number !=0)</span>
+<span class="nc" id="L756">                                s.posX--;</span>
+<span class="fc" id="L757">                            j=s.posX;</span>
+<span class="fc" id="L758">                            s.number = elements[j][i].number;</span>
+<span class="fc" id="L759">                        }</span>
+<span class="fc bfc" id="L760" title="All 2 branches covered.">                        else if(s.number != 0)</span>
+                        {
+<span class="fc" id="L762">                            s.number = elements[j][i].number;</span>
+<span class="fc" id="L763">                            s.posX = j;</span>
+<span class="fc" id="L764">                            s.posY = i;</span>
+                        }
+                    }
+
+                }
+<span class="fc bfc" id="L769" title="All 2 branches covered.">                if(moved) {</span>
+<span class="fc" id="L770">                    gameStatistics.addMoves(1);</span>
+<span class="fc" id="L771">                    last_points = temp_points;</span>
+<span class="fc" id="L772">                    last_elements = temp;</span>
+<span class="fc" id="L773">                    undoButton.setVisibility(View.VISIBLE);</span>
+<span class="fc" id="L774">                    undo = true;</span>
+                }
+<span class="fc bfc" id="L776" title="All 2 branches covered.">                if(moved)</span>
+<span class="fc" id="L777">                    gameStatistics.moveD();</span>
+<span class="fc" id="L778">                addNumber();</span>
+<span class="fc" id="L779">                setDPositions(animationActivated);</span>
+<span class="fc" id="L780">                updateGameState();</span>
+                //es wurde nach unten gewischt, hier den Code einfügen
+<span class="fc" id="L782">                return false;</span>
+            }
+            public boolean nichts(){
+                //es wurde keine wischrichtung erkannt, hier den Code einfügen
+<span class="nc" id="L786">                return false;</span>
+            }
+        };
+<span class="fc" id="L789">        touch_field.setOnTouchListener(swipeListener);</span>
+<span class="fc" id="L790">        number_field.setOnTouchListener(swipeListener);</span>
+<span class="fc bfc" id="L791" title="All 2 branches covered.">        for(int i = 0; i &lt; elements.length; i++) {</span>
+<span class="fc bfc" id="L792" title="All 2 branches covered.">            for (int j = 0; j &lt; elements[i].length; j++) {</span>
+<span class="fc" id="L793">                elements[i][j].setOnTouchListener(swipeListener);</span>
+<span class="fc" id="L794">                backgroundElements[i][j].setOnTouchListener(swipeListener);</span>
+            }
+        }
+<span class="fc" id="L797">    }</span>
+    public String display(Element[][] e)
+    {
+<span class="nc" id="L800">        String result = &quot;\n&quot;;</span>
+<span class="nc bnc" id="L801" title="All 2 branches missed.">        for(int i = 0; i &lt; e.length; i++)</span>
+        {
+<span class="nc bnc" id="L803" title="All 2 branches missed.">            for(int j = 0; j &lt; e[i].length;j++)</span>
+<span class="nc" id="L804">                result = result + &quot; &quot; + elements[i][j].number; //+ &quot; &quot;+elements[i][j];</span>
+<span class="nc" id="L805">            result = result + &quot;\n&quot;;</span>
+        }
+<span class="nc" id="L807">        result += &quot;\n&quot;;</span>
+<span class="nc bnc" id="L808" title="All 2 branches missed.">        for(int i = 0; i &lt; e.length; i++)</span>
+        {
+<span class="nc bnc" id="L810" title="All 2 branches missed.">            for(int j = 0; j &lt; e[i].length;j++)</span>
+<span class="nc" id="L811">                result = result + &quot; (&quot; + elements[i][j].getX() + &quot; , &quot; + elements[i][j].getY() + &quot;)&quot; + &quot; v:&quot; + elements[i][j].getVisibility();//+&quot; &quot;+elements[i][j];</span>
+<span class="nc" id="L812">            result = result + &quot;\n&quot;;</span>
+        }
+<span class="nc" id="L814">        return result;</span>
+    }
+
+    public void updateHighestNumber()
+    {
+<span class="fc bfc" id="L819" title="All 2 branches covered.">        for(int i = 0; i &lt; elements.length; i++)</span>
+        {
+<span class="fc bfc" id="L821" title="All 2 branches covered.">            for(int j = 0; j &lt; elements[i].length; j++)</span>
+            {
+<span class="fc bfc" id="L823" title="All 2 branches covered.">                if(highestNumber &lt; elements[i][j].number)</span>
+                {
+<span class="fc" id="L825">                    highestNumber = elements[i][j].number;</span>
+<span class="fc" id="L826">                    gameStatistics.setHighestNumber(highestNumber);</span>
+                }
+            }
+        }
+<span class="fc" id="L830">    }</span>
+
+    public void check2048()
+    {
+<span class="pc bpc" id="L834" title="1 of 2 branches missed.">        if(won2048 == false)</span>
+<span class="fc bfc" id="L835" title="All 2 branches covered.">        for(int i = 0; i &lt; elements.length; i++)</span>
+        {
+<span class="fc bfc" id="L837" title="All 2 branches covered.">            for(int j = 0; j &lt; elements[i].length; j++)</span>
+            {
+<span class="pc bpc" id="L839" title="1 of 2 branches missed.">                if(elements[i][j].number==WINTHRESHOLD)</span>
+                {
+
+<span class="nc" id="L842">                    saveStatisticsToFile(gameStatistics);</span>
+                    //MESSAGE
+<span class="nc" id="L844">                    new AlertDialog.Builder(this)</span>
+<span class="nc" id="L845">                            .setTitle((this.getResources().getString(R.string.Titel_V_Message)))</span>
+<span class="nc" id="L846">                            .setMessage((this.getResources().getString(R.string.Winning_Message)))</span>
+<span class="nc" id="L847">                            .setNegativeButton((this.getResources().getString(R.string.No_Message)), new DialogInterface.OnClickListener() {</span>
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+<span class="nc" id="L850">                                    onBackPressed();</span>
+
+<span class="nc" id="L852">                                }</span>
+                            })
+<span class="nc" id="L854">                            .setPositiveButton((this.getResources().getString(R.string.Yes_Message)), new DialogInterface.OnClickListener() {</span>
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+<span class="nc" id="L857">                                }</span>
+                            })
+<span class="nc" id="L859">                            .setCancelable(false)</span>
+<span class="nc" id="L860">                            .create().show();</span>
+<span class="nc" id="L861">                    won2048=true;</span>
+                }
+            }
+        }
+<span class="fc" id="L865">    }</span>
+
+
+
+    public void setDPositions(boolean animation)
+    {
+<span class="fc" id="L871">        long SCALINGSPEED = GameActivity.SCALINGSPEED;</span>
+<span class="fc" id="L872">        long ADDINGSPEED = GameActivity.ADDINGSPEED;</span>
+<span class="fc" id="L873">        long MOVINGSPEED = GameActivity.MOVINGSPEED;</span>
+<span class="fc" id="L874">        boolean scale = true;</span>
+<span class="fc bfc" id="L875" title="All 2 branches covered.">        if(!animation)</span>
+        {
+<span class="fc" id="L877">            SCALINGSPEED = 1;</span>
+<span class="fc" id="L878">            ADDINGSPEED = 1;</span>
+<span class="fc" id="L879">            MOVINGSPEED = 1;</span>
+<span class="fc" id="L880">            scale = false;</span>
+        }
+<span class="fc bfc" id="L882" title="All 2 branches covered.">        for(Element[] i: elements)</span>
+        {
+<span class="fc bfc" id="L884" title="All 2 branches covered.">            for(Element j:i)</span>
+            {
+<span class="fc bfc" id="L886" title="All 2 branches covered.">                if(j.dPosX != j.getX())</span>
+                {
+<span class="pc bpc" id="L888" title="1 of 4 branches missed.">                    if(j.animateMoving&amp;&amp;animation)</span>
+                    {
+<span class="fc bfc" id="L890" title="All 2 branches covered.">                        if(j.number != j.dNumber)</span>
+<span class="fc" id="L891">                            j.animate().x(j.dPosX).setDuration(MOVINGSPEED).setStartDelay(0).setInterpolator(new LinearInterpolator()).setListener(new MovingListener(j,scale)).start();</span>
+                        else
+<span class="fc" id="L893">                            j.animate().x(j.dPosX).setDuration(MOVINGSPEED).setStartDelay(0).setInterpolator(new LinearInterpolator()).setListener(new MovingListener(j,false)).start();</span>
+
+                    }
+                    else {
+<span class="fc bfc" id="L897" title="All 2 branches covered.">                        if(!animation) {</span>
+<span class="fc" id="L898">                            ViewGroup.MarginLayoutParams lp1 = (ViewGroup.MarginLayoutParams) j.getLayoutParams();</span>
+<span class="fc" id="L899">                            lp1.leftMargin = j.dPosX;</span>
+<span class="fc" id="L900">                            j.setLayoutParams(lp1);</span>
+<span class="fc" id="L901">                            j.drawItem();</span>
+<span class="fc" id="L902">                        }</span>
+                        else
+<span class="fc" id="L904">                            j.animate().x(j.dPosX).setDuration(0).setStartDelay(MOVINGSPEED).setInterpolator(new LinearInterpolator()).setListener(new MovingListener(j,false)).start();</span>
+
+                    }
+
+                }
+<span class="fc bfc" id="L909" title="All 2 branches covered.">                if(j.dPosY != j.getY())</span>
+                {
+<span class="pc bpc" id="L911" title="1 of 4 branches missed.">                    if(j.animateMoving&amp;&amp;animation)</span>
+                    {
+<span class="fc bfc" id="L913" title="All 2 branches covered.">                        if(j.number != j.dNumber)</span>
+<span class="fc" id="L914">                            j.animate().y(j.dPosY).setDuration(MOVINGSPEED).setStartDelay(0).setInterpolator(new LinearInterpolator()).setListener(new MovingListener(j,scale)).start();</span>
+                        else
+<span class="fc" id="L916">                            j.animate().y(j.dPosY).setDuration(MOVINGSPEED).setStartDelay(0).setInterpolator(new LinearInterpolator()).setListener(new MovingListener(j,false)).start();</span>
+
+                    }
+                    else {
+<span class="fc bfc" id="L920" title="All 2 branches covered.">                        if(!animation)</span>
+                        {
+<span class="fc" id="L922">                            ViewGroup.MarginLayoutParams lp1 = (ViewGroup.MarginLayoutParams) j.getLayoutParams();</span>
+<span class="fc" id="L923">                            lp1.topMargin = j.dPosY;</span>
+<span class="fc" id="L924">                            j.setLayoutParams(lp1);</span>
+<span class="fc" id="L925">                            j.drawItem();</span>
+<span class="fc" id="L926">                        }</span>
+                        else
+<span class="fc" id="L928">                            j.animate().y(j.dPosY).setDuration(0).setStartDelay(MOVINGSPEED).setInterpolator(new LinearInterpolator()).setListener(new MovingListener(j,false)).start();</span>
+
+                    }
+
+
+                }
+            }
+        }
+<span class="fc" id="L936">    }</span>
+
+    class MovingListener extends AnimatorListenerAdapter {
+<span class="fc" id="L939">        Element e = null;</span>
+<span class="fc" id="L940">        long SCALINGSPEED = 100;</span>
+<span class="fc" id="L941">        float scalingFactor = 1.5f;</span>
+<span class="fc" id="L942">        boolean scale =false;</span>
+        public MovingListener(Element e, boolean scale )
+<span class="fc" id="L944">        {</span>
+<span class="fc" id="L945">            super();</span>
+<span class="fc" id="L946">            this.e = e;</span>
+<span class="fc" id="L947">            this.SCALINGSPEED = GameActivity.SCALINGSPEED;</span>
+<span class="fc" id="L948">            this.scalingFactor = GameActivity.SCALINGFACTOR;</span>
+<span class="fc" id="L949">            this.scale = scale;</span>
+<span class="fc" id="L950">        }</span>
+        @Override
+        public void onAnimationCancel(Animator animation) {
+<span class="nc" id="L953">            super.onAnimationCancel(animation);</span>
+<span class="nc" id="L954">            animation.setupEndValues();</span>
+<span class="nc bnc" id="L955" title="All 2 branches missed.">            if(e!=null)</span>
+<span class="nc" id="L956">                e.drawItem();</span>
+<span class="nc" id="L957">        }</span>
+        @Override
+        public void onAnimationPause(Animator animation){
+<span class="nc" id="L960">            super.onAnimationPause(animation);</span>
+<span class="nc" id="L961">        }</span>
+        @Override
+        public void onAnimationEnd(Animator animation) {
+<span class="fc" id="L964">            super.onAnimationEnd(animation);</span>
+<span class="pc bpc" id="L965" title="1 of 2 branches missed.">            if(e!=null) {</span>
+<span class="fc" id="L966">                e.drawItem();</span>
+<span class="fc bfc" id="L967" title="All 2 branches covered.">                if(scale)</span>
+<span class="fc" id="L968">                    e.animate().scaleX(scalingFactor).scaleY(scalingFactor).setDuration(SCALINGSPEED).setStartDelay(0).setInterpolator(new LinearInterpolator()).setListener(new ScalingListener(e)).start();</span>
+            }
+
+<span class="fc" id="L971">        }</span>
+    }
+
+    class ScalingListener extends AnimatorListenerAdapter {
+<span class="pc" id="L975">        Element e = null;</span>
+        public ScalingListener(Element e)
+<span class="fc" id="L977">        {</span>
+<span class="fc" id="L978">            super();</span>
+<span class="fc" id="L979">            this.e = e;</span>
+<span class="fc" id="L980">        }</span>
+        public ScalingListener()
+<span class="nc" id="L982">        {</span>
+<span class="nc" id="L983">            super();</span>
+<span class="nc" id="L984">        }</span>
+        @Override
+        public void onAnimationCancel(Animator animation) {
+<span class="nc" id="L987">            super.onAnimationCancel(animation);</span>
+<span class="nc" id="L988">            animation.setupEndValues();</span>
+<span class="nc" id="L989">        }</span>
+        @Override
+        public void onAnimationPause(Animator animation){
+<span class="nc" id="L992">            super.onAnimationPause(animation);</span>
+<span class="nc" id="L993">        }</span>
+        @Override
+        public void onAnimationEnd(Animator animation) {
+<span class="fc" id="L996">            super.onAnimationEnd(animation);</span>
+<span class="pc bpc" id="L997" title="1 of 2 branches missed.">            if(e!=null) {</span>
+<span class="fc" id="L998">                e.animate().scaleX(1.0f).scaleY(1.0f).setDuration(SCALINGSPEED).setStartDelay(0).setInterpolator(new LinearInterpolator()).setListener(new AnimatorListenerAdapter() {</span>
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+<span class="nc" id="L1001">                        super.onAnimationCancel(animation);</span>
+<span class="nc" id="L1002">                    }</span>
+<span class="fc" id="L1003">                }).start();</span>
+            }
+
+<span class="fc" id="L1006">        }</span>
+    }
+
+    public void addNumber()
+    {
+
+<span class="fc bfc" id="L1012" title="All 2 branches covered.">        if(points&gt;record) {</span>
+<span class="fc" id="L1013">            record = points;</span>
+<span class="fc" id="L1014">            gameStatistics.setRecord(record);</span>
+<span class="fc" id="L1015">            textFieldRecord.setText(&quot;&quot;+record);</span>
+        }
+<span class="fc bfc" id="L1017" title="All 2 branches covered.">        if(moved) {</span>
+<span class="fc" id="L1018">            gameOver = false;</span>
+<span class="fc" id="L1019">            moved = false;</span>
+<span class="fc" id="L1020">            textFieldPoints.setText(&quot;&quot; + points);</span>
+<span class="fc" id="L1021">            Element[] empty_fields = new Element[n * n];</span>
+<span class="fc" id="L1022">            int counter = 0;</span>
+<span class="fc bfc" id="L1023" title="All 2 branches covered.">            for (int i = 0; i &lt; elements.length; i++) {</span>
+<span class="fc bfc" id="L1024" title="All 2 branches covered.">                for (int j = 0; j &lt; elements[i].length; j++) {</span>
+<span class="fc bfc" id="L1025" title="All 2 branches covered.">                    if (elements[i][j].number == 0) {</span>
+<span class="fc" id="L1026">                        empty_fields[counter++] = elements[i][j];</span>
+                    }
+                }
+            }
+<span class="pc bpc" id="L1030" title="1 of 2 branches missed.">            if(counter&gt;0) {</span>
+<span class="fc" id="L1031">                int index = (int) (Math.random() * counter);</span>
+<span class="fc" id="L1032">                int number = 2;</span>
+<span class="fc bfc" id="L1033" title="All 2 branches covered.">                if (Math.random() &gt; PROPABILITYFORTWO)</span>
+<span class="fc" id="L1034">                    number = 4;</span>
+
+<span class="fc" id="L1036">                empty_fields[index].setNumber(number);</span>
+<span class="fc" id="L1037">                empty_fields[index].drawItem();</span>
+<span class="fc bfc" id="L1038" title="All 2 branches covered.">                if(animationActivated){</span>
+<span class="fc" id="L1039">                    empty_fields[index].setAlpha(0);</span>
+<span class="fc" id="L1040">                    empty_fields[index].animate().alpha(1).setInterpolator(new LinearInterpolator()).setStartDelay(MOVINGSPEED).setDuration(ADDINGSPEED).start();</span>
+                }
+<span class="pc bpc" id="L1042" title="1 of 2 branches missed.">                if(counter == 1)</span>
+                {
+<span class="nc" id="L1044">                    gameOver = true;</span>
+<span class="nc bnc" id="L1045" title="All 2 branches missed.">                    for (int i = 0; i &lt; elements.length; i++) {</span>
+<span class="nc bnc" id="L1046" title="All 2 branches missed.">                        for (int j = 0; j &lt; elements[i].length; j++) {</span>
+<span class="nc bnc" id="L1047" title="All 8 branches missed.">                            if ((i+1 &lt; elements.length &amp;&amp; elements[i][j].number == elements[i+1][j].number)|| (j+1 &lt; elements[i].length &amp;&amp; elements[i][j].number == elements[i][j+1].number)) {</span>
+<span class="nc" id="L1048">                                gameOver = false;</span>
+                            }
+                        }
+                    }
+                }
+            }
+<span class="fc" id="L1054">            updateGameState();</span>
+
+<span class="pc bpc" id="L1056" title="1 of 2 branches missed.">            if(gameOver)</span>
+            {
+<span class="nc" id="L1058">                gameOver();</span>
+            }
+        }
+<span class="fc" id="L1061">        Log.i(&quot;number of elements&quot;, &quot;&quot;+number_field.getChildCount() + &quot;, &quot;+ number_field_background.getChildCount());</span>
+<span class="fc" id="L1062">    }</span>
+    public void gameOver()
+    {
+<span class="nc" id="L1065">        Log.i(&quot;record&quot;,&quot;&quot;+record + &quot;, &quot; + gameStatistics.getRecord());</span>
+<span class="nc" id="L1066">        saveStatisticsToFile(gameStatistics);</span>
+<span class="nc" id="L1067">        new AlertDialog.Builder(this)</span>
+<span class="nc" id="L1068">                .setTitle((this.getResources().getString(R.string.Titel_L_Message, points)))</span>
+<span class="nc" id="L1069">                .setMessage(this.getResources().getString(R.string.Lost_Message, points))</span>
+<span class="nc" id="L1070">                .setNegativeButton((this.getResources().getString(R.string.No_Message)), new DialogInterface.OnClickListener() {</span>
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+<span class="nc" id="L1073">                        createNewGame = true;</span>
+<span class="nc" id="L1074">                        getIntent().putExtra(&quot;new&quot;,true);</span>
+<span class="nc" id="L1075">                        initialize();</span>
+<span class="nc" id="L1076">                        deleteStateFile();</span>
+<span class="nc" id="L1077">                        saveState = false;</span>
+<span class="nc" id="L1078">                        GameActivity.this.onBackPressed();</span>
+
+<span class="nc" id="L1080">                    }</span>
+                })
+<span class="nc" id="L1082">                .setPositiveButton((this.getResources().getString(R.string.Yes_Message)), new DialogInterface.OnClickListener() {</span>
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+<span class="nc" id="L1085">                        createNewGame();</span>
+<span class="nc" id="L1086">                    }</span>
+                })
+<span class="nc" id="L1088">                .setCancelable(false)</span>
+<span class="nc" id="L1089">                .create().show();</span>
+<span class="nc" id="L1090">        Log.i(&quot;record&quot;,&quot;danach&quot;);</span>
+<span class="nc" id="L1091">    }</span>
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+<span class="fc" id="L1096">        getMenuInflater().inflate(R.menu.main, menu);</span>
+<span class="fc" id="L1097">        return true;</span>
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+<span class="fc" id="L1105">        int id = item.getItemId();</span>
+
+        //noinspection SimplifiableIfStatement
+
+<span class="pc bpc" id="L1109" title="1 of 2 branches missed.">        if (id == R.id.action_settings) {</span>
+<span class="nc" id="L1110">            return true;</span>
+        }
+<span class="pc bpc" id="L1112" title="1 of 2 branches missed.">        else if( id == android.R.id.home){</span>
+<span class="fc" id="L1113">            save();</span>
+        }
+
+<span class="fc" id="L1116">        return super.onOptionsItemSelected(item);</span>
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        // TODO Auto-generated method stub
+<span class="fc" id="L1122">        super.onWindowFocusChanged(hasFocus);</span>
+<span class="fc" id="L1123">        start();</span>
+
+
+<span class="fc" id="L1126">    }</span>
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+<span class="nc" id="L1129">        super.onSaveInstanceState(savedInstanceState);</span>
+
+<span class="nc" id="L1131">       save();</span>
+
+<span class="nc" id="L1133">    }</span>
+
+    public void saveStateToFile(GameState nS)
+    {
+<span class="pc bpc" id="L1137" title="1 of 2 branches missed.">        if(saveState)</span>
+            try {
+<span class="pc bpc" id="L1139" title="1 of 2 branches missed.">                if(filename == null)</span>
+<span class="nc" id="L1140">                    filename = &quot;state&quot; + n + &quot;.txt&quot;;</span>
+<span class="fc" id="L1141">                File file = new File(getFilesDir(), filename);</span>
+<span class="fc" id="L1142">                FileOutputStream fileOut = new FileOutputStream(file);</span>
+<span class="fc" id="L1143">                ObjectOutputStream out = new ObjectOutputStream(fileOut);</span>
+<span class="fc" id="L1144">                out.writeObject(nS);</span>
+<span class="fc" id="L1145">                out.close();</span>
+<span class="fc" id="L1146">                fileOut.close();</span>
+<span class="nc" id="L1147">            } catch (IOException e) {</span>
+//                e.printStackTrace();
+<span class="fc" id="L1149">            }</span>
+<span class="fc" id="L1150">    }</span>
+
+    public boolean deleteStateFile()
+    {
+        try{
+<span class="nc bnc" id="L1155" title="All 2 branches missed.">            if(filename == null)</span>
+<span class="nc" id="L1156">                filename = &quot;state&quot; + n + &quot;.txt&quot;;</span>
+<span class="nc" id="L1157">            File directory = getFilesDir();</span>
+<span class="nc" id="L1158">            File f = new File(directory,filename);</span>
+<span class="nc" id="L1159">            return f.delete();</span>
+        }
+<span class="nc" id="L1161">        catch(Exception e)</span>
+        {
+//            e.printStackTrace();
+        }
+<span class="nc" id="L1165">        return false;</span>
+    }
+    public GameState readStateFromFile()
+    {
+<span class="nc" id="L1169">        GameState nS = new GameState(n);</span>
+        try{
+<span class="nc" id="L1171">            File file = new File(getFilesDir(), filename);</span>
+<span class="nc" id="L1172">            FileInputStream fileIn = new FileInputStream(file);</span>
+<span class="nc" id="L1173">            ObjectInputStream in = new ObjectInputStream(fileIn);</span>
+<span class="nc" id="L1174">            nS = (GameState)in.readObject();</span>
+<span class="nc" id="L1175">            boolean emptyField = true;</span>
+<span class="nc bnc" id="L1176" title="All 2 branches missed.">            for(int i = 0; i &lt;nS.numbers.length;i++)</span>
+            {
+<span class="nc bnc" id="L1178" title="All 2 branches missed.">                if(nS.numbers[i]&gt;0)</span>
+                {
+<span class="nc" id="L1180">                    emptyField = false;</span>
+<span class="nc" id="L1181">                    break;</span>
+                }
+            }
+<span class="nc bnc" id="L1184" title="All 4 branches missed.">            if(emptyField||nS.n != n) {</span>
+<span class="nc" id="L1185">                nS = new GameState(n);</span>
+<span class="nc" id="L1186">                newGame = true;</span>
+            }
+<span class="nc" id="L1188">            in.close();</span>
+<span class="nc" id="L1189">            fileIn.close();</span>
+        }
+<span class="nc" id="L1191">        catch(Exception e)</span>
+        {
+<span class="nc" id="L1193">            newGame = true;</span>
+//            e.printStackTrace();
+<span class="nc" id="L1195">        }</span>
+<span class="nc" id="L1196">        return nS;</span>
+    }
+    public GameStatistics readStatisticsFromFile()
+    {
+<span class="fc" id="L1200">        GameStatistics gS = new GameStatistics(n);</span>
+        try{
+<span class="fc" id="L1202">            File file = new File(getFilesDir(), &quot;statistics&quot; + n + &quot;.txt&quot;);</span>
+<span class="fc" id="L1203">            FileInputStream fileIn = new FileInputStream(file);</span>
+<span class="fc" id="L1204">            ObjectInputStream in = new ObjectInputStream(fileIn);</span>
+<span class="fc" id="L1205">            gS = (GameStatistics)in.readObject();</span>
+<span class="fc" id="L1206">            in.close();</span>
+<span class="fc" id="L1207">            fileIn.close();</span>
+        }
+<span class="fc" id="L1209">        catch(Exception e)</span>
+        {
+//            e.printStackTrace();
+<span class="fc" id="L1212">        }</span>
+<span class="fc" id="L1213">        return gS;</span>
+    }
+    public void saveStatisticsToFile(GameStatistics gS)
+    {
+        try {
+<span class="fc" id="L1218">            File file = new File(getFilesDir(), gS.getFilename());</span>
+<span class="fc" id="L1219">            FileOutputStream fileOut = new FileOutputStream(file);</span>
+<span class="fc" id="L1220">            ObjectOutputStream out = new ObjectOutputStream(fileOut);</span>
+<span class="fc" id="L1221">            out.writeObject(gS);</span>
+<span class="fc" id="L1222">            out.close();</span>
+<span class="fc" id="L1223">            fileOut.close();</span>
+<span class="nc" id="L1224">        } catch (IOException e) {</span>
+//            e.printStackTrace();
+<span class="fc" id="L1226">        }</span>
+<span class="fc" id="L1227">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>Generated by the Android Gradle plugin 7.3.1</div></body></html>

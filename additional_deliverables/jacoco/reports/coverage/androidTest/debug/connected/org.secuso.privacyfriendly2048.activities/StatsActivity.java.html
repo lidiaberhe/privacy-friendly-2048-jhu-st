@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StatsActivity.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=0;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">debug</a> &gt; <a href="index.source.html" class="el_package">org.secuso.privacyfriendly2048.activities</a> &gt; <span class="el_source">StatsActivity.java</span></div><h1>StatsActivity.java</h1><pre class="source lang-java linenums">/*
+ This file is part of Privacy Friendly 2048. This app implements the functions of the
+ game 2048 in a privacy friendly version.
+
+ Privacy Friendly 2048 is free software:
+ you can redistribute it and/or modify it under the terms of the
+ GNU General Public License as published by the Free Software Foundation,
+ either version 3 of the License, or any later version.
+
+ Privacy Friendly App Example is distributed in the hope
+ that it will be useful, but WITHOUT ANY WARRANTY; without even
+ the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ See the GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with Privacy Friendly App Example. If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ */
+
+
+package org.secuso.privacyfriendly2048.activities;
+
+import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.RatingBar;
+import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
+
+import org.secuso.privacyfriendly2048.activities.helper.BaseActivity;
+import org.secuso.privacyfriendly2048.R;
+import org.secuso.privacyfriendly2048.activities.helper.GameStatistics;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InvalidClassException;
+import java.io.ObjectInputStream;
+import java.math.RoundingMode;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * The game statistics of the four modes are loaded and shown with a ViePager in this activity.
+ *
+ * @author Julian Wadephul and Saskia Jacob
+ * @version 20180910
+ */
+<span class="fc" id="L69">public class StatsActivity extends BaseActivity {</span>
+
+<span class="fc" id="L71">    private int[] layouts = new int[]{</span>
+            R.layout.fragment_stats1,
+            R.layout.fragment_stats2,
+            R.layout.fragment_stats3,
+            R.layout.fragment_stats4,
+    };
+
+<span class="fc" id="L78">    String [] TABNAMES = {&quot;4x4&quot;,&quot;5x5&quot;,&quot;6x6&quot;,&quot;7x7&quot;};</span>
+
+    /**
+     * The {@link android.support.v4.view.PagerAdapter} that will provide
+     * fragments for each of the sections. We use a
+     * {@link FragmentPagerAdapter} derivative, which will keep every
+     * loaded fragment in memory. If this becomes too memory intensive, it
+     * may be best to switch to a
+     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
+     */
+    public StatsActivity.MyViewPagerAdapter mSectionsPagerAdapter;
+
+    /**
+     * The {@link ViewPager} that will host the section contents.
+     */
+    private ViewPager mViewPager;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+<span class="fc" id="L97">        super.onCreate(savedInstanceState);</span>
+<span class="fc" id="L98">        setContentView(R.layout.activity_stats);</span>
+
+<span class="fc" id="L100">        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);</span>
+<span class="fc" id="L101">        setSupportActionBar(toolbar);</span>
+
+<span class="fc" id="L103">        android.support.v7.app.ActionBar actionBar = getSupportActionBar();</span>
+        //actionBar.setTitle(R.string.menu_highscore);
+<span class="fc" id="L105">        actionBar.setDisplayHomeAsUpEnabled(true);</span>
+<span class="fc" id="L106">        actionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor(&quot;#024265&quot;)));</span>
+
+        // Create the adapter that will return a fragment for each of the three
+        // primary sections of the activity.
+<span class="fc" id="L110">        mSectionsPagerAdapter = new MyViewPagerAdapter();</span>
+
+        // Set up the ViewPager with the sections adapter.
+<span class="fc" id="L113">        mViewPager = (ViewPager) findViewById(R.id.main_content);</span>
+<span class="fc" id="L114">        mViewPager.setAdapter(mSectionsPagerAdapter);</span>
+
+
+<span class="fc" id="L117">        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);</span>
+<span class="fc" id="L118">        tabLayout.setupWithViewPager(mViewPager);</span>
+        //tabLayout.setTabTextColors(Color.WHITE,Color.YELLOW);
+<span class="fc" id="L120">    }</span>
+
+    @Override
+    protected int getNavigationDrawerID() {
+<span class="fc" id="L124">        return R.id.nav_statistics;</span>
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+<span class="fc" id="L131">        getMenuInflater().inflate(R.menu.menu_stats, menu);</span>
+        //getMenuInflater().inflate(R.menu.menu_stats, menu);
+<span class="fc" id="L133">        return true;</span>
+        //return false;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+
+        //noinspection SimplifiableIfStatement
+<span class="pc bpc" id="L144" title="2 of 3 branches missed.">        switch(item.getItemId()) {</span>
+            case R.id.action_reset:
+            //    SaveLoadStatistics.resetStats(this);
+            //    mSectionsPagerAdapter.refresh(this);
+
+<span class="fc" id="L149">                resetGameStatistics();</span>
+<span class="fc" id="L150">                return true;</span>
+            case android.R.id.home:
+<span class="nc" id="L152">                finish();</span>
+<span class="nc" id="L153">                return true;</span>
+        }
+
+<span class="nc" id="L156">        return super.onOptionsItemSelected(item);</span>
+    }
+    public void resetGameStatistics(){
+<span class="fc bfc" id="L159" title="All 2 branches covered.">        for(int n = 4; n &lt;= 7; n++) {</span>
+            try {
+<span class="fc" id="L161">                File file = new File(getFilesDir(), &quot;statistics&quot; + n + &quot;.txt&quot;);</span>
+<span class="fc" id="L162">                file.delete();</span>
+<span class="nc" id="L163">            } catch (Exception e) {</span>
+
+<span class="fc" id="L165">            }</span>
+        }
+<span class="fc" id="L167">        finish();</span>
+<span class="fc" id="L168">        startActivity(getIntent());</span>
+<span class="fc" id="L169">    }</span>
+
+
+    public class MyViewPagerAdapter extends PagerAdapter {
+        private LayoutInflater layoutInflater;
+
+<span class="fc" id="L175">        public MyViewPagerAdapter() {</span>
+<span class="fc" id="L176">        }</span>
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+<span class="fc" id="L180">            return TABNAMES[position];</span>
+        }
+        @Override
+        public Object instantiateItem(ViewGroup container, int position) {
+<span class="fc" id="L184">            layoutInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);</span>
+<span class="fc" id="L185">            View view = layoutInflater.inflate(layouts[position], container, false);</span>
+<span class="fc" id="L186">            container.addView(view);</span>
+<span class="fc" id="L187">            ImageView img = new ImageView(StatsActivity.this);</span>
+<span class="fc" id="L188">            TextView highestNumber = new TextView(StatsActivity.this);</span>
+<span class="fc" id="L189">            TextView timePlayed = new TextView(StatsActivity.this);</span>
+<span class="fc" id="L190">            TextView undo = new TextView(StatsActivity.this);</span>
+<span class="fc" id="L191">            TextView moves_L = new TextView(StatsActivity.this);</span>
+<span class="fc" id="L192">            TextView moves_R = new TextView(StatsActivity.this);</span>
+<span class="fc" id="L193">            TextView moves_T = new TextView(StatsActivity.this);</span>
+<span class="fc" id="L194">            TextView moves_D = new TextView(StatsActivity.this);</span>
+<span class="fc" id="L195">            TextView moves = new TextView(StatsActivity.this);</span>
+<span class="fc" id="L196">            TextView tpm = new TextView(StatsActivity.this);</span>
+<span class="fc" id="L197">            TextView rekord = new TextView(StatsActivity.this);</span>
+<span class="pc bpc" id="L198" title="1 of 5 branches missed.">            switch(position)</span>
+            {
+                case 0:
+<span class="fc" id="L201">                    highestNumber = findViewById(R.id.highest_number1);</span>
+<span class="fc" id="L202">                    timePlayed = findViewById(R.id.time_played1);</span>
+<span class="fc" id="L203">                    undo = findViewById(R.id.undo_number1);</span>
+<span class="fc" id="L204">                    moves_D = findViewById(R.id.moves_D1);</span>
+<span class="fc" id="L205">                    moves_L = findViewById(R.id.moves_L1);</span>
+<span class="fc" id="L206">                    moves_R = findViewById(R.id.moves_R1);</span>
+<span class="fc" id="L207">                    moves_T = findViewById(R.id.moves_T1);</span>
+<span class="fc" id="L208">                    moves = findViewById(R.id.moves_All1);</span>
+<span class="fc" id="L209">                    tpm = findViewById(R.id.time_swipes1);</span>
+<span class="fc" id="L210">                    rekord = findViewById(R.id.highest_score1);</span>
+<span class="fc" id="L211">                    img = findViewById(R.id.stat_img1);</span>
+<span class="fc bfc" id="L212" title="All 2 branches covered.">                    if(PreferenceManager.getDefaultSharedPreferences(StatsActivity.this).getString(&quot;pref_color&quot;,&quot;1&quot;).equals(&quot;1&quot;))</span>
+<span class="fc" id="L213">                        Glide.with(StatsActivity.this).load(R.drawable.layout4x4_s).into(img);</span>
+                    else
+<span class="fc" id="L215">                        Glide.with(StatsActivity.this).load(R.drawable.layout4x4_o).into(img);</span>
+<span class="fc" id="L216">                    break;</span>
+                case 1:
+<span class="fc" id="L218">                    highestNumber = findViewById(R.id.highest_number2);</span>
+<span class="fc" id="L219">                    timePlayed = findViewById(R.id.time_played2);</span>
+<span class="fc" id="L220">                    undo = findViewById(R.id.undo_number2);</span>
+<span class="fc" id="L221">                    moves_D = findViewById(R.id.moves_D2);</span>
+<span class="fc" id="L222">                    moves_L = findViewById(R.id.moves_L2);</span>
+<span class="fc" id="L223">                    moves_R = findViewById(R.id.moves_R2);</span>
+<span class="fc" id="L224">                    moves_T = findViewById(R.id.moves_T2);</span>
+<span class="fc" id="L225">                    moves = findViewById(R.id.moves_All2);</span>
+<span class="fc" id="L226">                    tpm = findViewById(R.id.time_swipes2);</span>
+<span class="fc" id="L227">                    rekord = findViewById(R.id.highest_score2);</span>
+<span class="fc" id="L228">                    img = findViewById(R.id.stat_img2);</span>
+<span class="fc bfc" id="L229" title="All 2 branches covered.">                    if(PreferenceManager.getDefaultSharedPreferences(StatsActivity.this).getString(&quot;pref_color&quot;,&quot;1&quot;).equals(&quot;1&quot;))</span>
+<span class="fc" id="L230">                        Glide.with(StatsActivity.this).load(R.drawable.layout5x5_s).into(img);</span>
+                    else
+<span class="fc" id="L232">                        Glide.with(StatsActivity.this).load(R.drawable.layout5x5_o).into(img);</span>
+<span class="fc" id="L233">                    break;</span>
+                case 2:
+<span class="fc" id="L235">                    highestNumber = findViewById(R.id.highest_number3);</span>
+<span class="fc" id="L236">                    timePlayed = findViewById(R.id.time_played3);</span>
+<span class="fc" id="L237">                    undo = findViewById(R.id.undo_number3);</span>
+<span class="fc" id="L238">                    moves_D = findViewById(R.id.moves_D3);</span>
+<span class="fc" id="L239">                    moves_L = findViewById(R.id.moves_L3);</span>
+<span class="fc" id="L240">                    moves_R = findViewById(R.id.moves_R3);</span>
+<span class="fc" id="L241">                    moves_T = findViewById(R.id.moves_T3);</span>
+<span class="fc" id="L242">                    moves = findViewById(R.id.moves_All3);</span>
+<span class="fc" id="L243">                    tpm = findViewById(R.id.time_swipes3);</span>
+<span class="fc" id="L244">                    rekord = findViewById(R.id.highest_score3);</span>
+<span class="fc" id="L245">                    img = findViewById(R.id.stat_img3);</span>
+<span class="fc bfc" id="L246" title="All 2 branches covered.">                    if(PreferenceManager.getDefaultSharedPreferences(StatsActivity.this).getString(&quot;pref_color&quot;,&quot;1&quot;).equals(&quot;1&quot;))</span>
+<span class="fc" id="L247">                        Glide.with(StatsActivity.this).load(R.drawable.layout6x6_s).into(img);</span>
+                    else
+<span class="fc" id="L249">                        Glide.with(StatsActivity.this).load(R.drawable.layout6x6_o).into(img);</span>
+<span class="fc" id="L250">                    break;</span>
+                case 3:
+<span class="fc" id="L252">                    highestNumber = findViewById(R.id.highest_number4);</span>
+<span class="fc" id="L253">                    timePlayed = findViewById(R.id.time_played4);</span>
+<span class="fc" id="L254">                    undo = findViewById(R.id.undo_number4);</span>
+<span class="fc" id="L255">                    moves_D = findViewById(R.id.moves_D4);</span>
+<span class="fc" id="L256">                    moves_L = findViewById(R.id.moves_L4);</span>
+<span class="fc" id="L257">                    moves_R = findViewById(R.id.moves_R4);</span>
+<span class="fc" id="L258">                    moves_T = findViewById(R.id.moves_T4);</span>
+<span class="fc" id="L259">                    moves = findViewById(R.id.moves_All4);</span>
+<span class="fc" id="L260">                    tpm = findViewById(R.id.time_swipes4);</span>
+<span class="fc" id="L261">                    rekord = findViewById(R.id.highest_score4);</span>
+<span class="fc" id="L262">                    img = findViewById(R.id.stat_img4);</span>
+<span class="fc bfc" id="L263" title="All 2 branches covered.">                    if(PreferenceManager.getDefaultSharedPreferences(StatsActivity.this).getString(&quot;pref_color&quot;,&quot;1&quot;).equals(&quot;1&quot;))</span>
+<span class="fc" id="L264">                        Glide.with(StatsActivity.this).load(R.drawable.layout7x7_s).into(img);</span>
+                    else
+<span class="fc" id="L266">                        Glide.with(StatsActivity.this).load(R.drawable.layout7x7_o).into(img);</span>
+                    break;
+            }
+<span class="fc" id="L269">            GameStatistics gameStatistics = readStatisticsFromFile(position+4);</span>
+<span class="fc" id="L270">            highestNumber.setText(&quot;&quot;+gameStatistics.getHighestNumber());</span>
+<span class="fc" id="L271">            timePlayed.setText(formatMillis(gameStatistics.getTimePlayed()));</span>
+<span class="fc" id="L272">            undo.setText(&quot;&quot; + gameStatistics.getUndo());</span>
+<span class="fc" id="L273">            moves_D.setText(&quot;&quot; + gameStatistics.getMoves_d());</span>
+<span class="fc" id="L274">            moves_R.setText(&quot;&quot; + gameStatistics.getMoves_r());</span>
+<span class="fc" id="L275">            moves_T.setText(&quot;&quot; + gameStatistics.getMoves_t());</span>
+<span class="fc" id="L276">            moves_L.setText(&quot;&quot; + gameStatistics.getMoves_l());</span>
+<span class="fc" id="L277">            moves.setText(&quot;&quot;+gameStatistics.getMoves());</span>
+<span class="fc bfc" id="L278" title="All 2 branches covered.">            if(gameStatistics.getMoves()!=0)</span>
+<span class="fc" id="L279">                tpm.setText(&quot;&quot;+formatSmallMillis(gameStatistics.getTimePlayed()/gameStatistics.getMoves()));</span>
+            else
+<span class="fc" id="L281">                tpm.setText(&quot;0&quot;);</span>
+<span class="fc" id="L282">            rekord.setText(&quot;&quot;+gameStatistics.getRecord());</span>
+
+
+
+<span class="fc" id="L286">            return view;</span>
+        }
+
+        public String formatSmallMillis(long timeInMillis) {
+<span class="fc" id="L290">            String sign = &quot;&quot;;</span>
+<span class="pc bpc" id="L291" title="1 of 2 branches missed.">            if (timeInMillis &lt; 0) {</span>
+<span class="nc" id="L292">                sign = &quot;-&quot;;</span>
+<span class="nc" id="L293">                timeInMillis = Math.abs(timeInMillis);</span>
+            }
+<span class="fc" id="L295">            Double seconds = new Double(((double)timeInMillis) / (double)TimeUnit.SECONDS.toMillis(1));</span>
+<span class="fc" id="L296">            StringBuilder sb = new StringBuilder(&quot;,##0.00&quot;);</span>
+<span class="fc" id="L297">            DecimalFormat df = new DecimalFormat(sb.toString());</span>
+<span class="fc" id="L298">            df.setRoundingMode(RoundingMode.HALF_UP);</span>
+<span class="fc" id="L299">            final StringBuilder formatted = new StringBuilder(20);</span>
+<span class="fc" id="L300">            formatted.append(sign);</span>
+<span class="fc" id="L301">            formatted.append(df.format(seconds));</span>
+<span class="fc" id="L302">            formatted.append(&quot; s&quot;);</span>
+<span class="fc" id="L303">            return formatted.toString();</span>
+        }
+        public String formatMillis(long timeInMillis) {
+<span class="fc" id="L306">            String sign = &quot;&quot;;</span>
+<span class="pc bpc" id="L307" title="1 of 2 branches missed.">            if (timeInMillis &lt; 0) {</span>
+<span class="nc" id="L308">                sign = &quot;-&quot;;</span>
+<span class="nc" id="L309">                timeInMillis = Math.abs(timeInMillis);</span>
+            }
+<span class="fc" id="L311">            Double seconds = new Double(((double)timeInMillis) / (double)TimeUnit.HOURS.toMillis(1));</span>
+<span class="fc" id="L312">            StringBuilder sb = new StringBuilder(&quot;,##0.00&quot;);</span>
+<span class="fc" id="L313">            DecimalFormat df = new DecimalFormat(sb.toString());</span>
+<span class="fc" id="L314">            df.setRoundingMode(RoundingMode.HALF_UP);</span>
+<span class="fc" id="L315">            final StringBuilder formatted = new StringBuilder(20);</span>
+<span class="fc" id="L316">            formatted.append(sign);</span>
+<span class="fc" id="L317">            formatted.append(df.format(seconds));</span>
+<span class="fc" id="L318">            formatted.append(&quot; h&quot;);</span>
+<span class="fc" id="L319">            return formatted.toString();</span>
+        }
+        @Override
+        public int getCount() {
+<span class="fc" id="L323">            return layouts.length;</span>
+        }
+
+        @Override
+        public boolean isViewFromObject(View view, Object obj) {
+<span class="fc bfc" id="L328" title="All 2 branches covered.">            return view == obj;</span>
+        }
+
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+<span class="fc" id="L334">            View view = (View) object;</span>
+<span class="fc" id="L335">            container.removeView(view);</span>
+<span class="fc" id="L336">        }</span>
+
+        public GameStatistics readStatisticsFromFile(int n)
+        {
+<span class="fc" id="L340">            GameStatistics gS = new GameStatistics(n);</span>
+            try{
+<span class="fc" id="L342">                File file = new File(getFilesDir(), &quot;statistics&quot; + n + &quot;.txt&quot;);</span>
+<span class="fc" id="L343">                FileInputStream fileIn = new FileInputStream(file);</span>
+<span class="fc" id="L344">                ObjectInputStream in = new ObjectInputStream(fileIn);</span>
+<span class="fc" id="L345">                gS = (GameStatistics)in.readObject();</span>
+<span class="fc" id="L346">                in.close();</span>
+<span class="fc" id="L347">                fileIn.close();</span>
+            }
+<span class="nc" id="L349">            catch(InvalidClassException ice)</span>
+            {
+<span class="nc" id="L351">                File file = new File(getFilesDir(), &quot;statistics&quot; + n + &quot;.txt&quot;);</span>
+<span class="nc" id="L352">                file.delete();</span>
+            }
+<span class="fc" id="L354">            catch(Exception e)</span>
+            {
+<span class="fc" id="L356">                e.printStackTrace();</span>
+<span class="pc" id="L357">            }</span>
+<span class="fc" id="L358">            return gS;</span>
+        }
+    }
+
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span>Generated by the Android Gradle plugin 7.3.1</div></body></html>

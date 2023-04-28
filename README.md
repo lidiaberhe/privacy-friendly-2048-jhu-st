@@ -1,6 +1,7 @@
 ### README FOR TESTS
+Additional deliverables are under `additional_deliverables` file!
 Use Android Studio to run our tests!
-Please find our Jacoco results for the GUI tests in the folder titled Jacoco; then, under `reports` > `coverage` > `androidTest` > `debug` > `connected` should be an `index.html` file, that you can right-click on then open with your preferred browser. 
+Please find our Jacoco results for the GUI tests in the folder titled `Jacoco`; then, under `reports` > `coverage` > `androidTest` > `debug` > `connected` should be an `index.html` file, that you can right-click on then open with your preferred browser.
 To generate coverage results for the unit tests, please read below.
 
 In order to run our tests, especially our GUI tests, you need an emulator set up that runs Android API 27. To do so follow the instructions provided by Android:
