@@ -4,59 +4,35 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.robolectric.Shadows.shadowOf;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.InOrder;
-import org.mockito.internal.matchers.ArrayEquals;
-import org.robolectric.Robolectric;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.Shadows;
-import org.robolectric.android.controller.ActivityController;
-import org.robolectric.annotation.Config;
-import org.robolectric.shadows.ShadowActivity;
-import org.robolectric.shadows.ShadowIntent;
-//import org.robolectric.shadows.support.v4.Shadows;
-import org.secuso.privacyfriendly2048.R;
-import org.secuso.privacyfriendly2048.activities.helper.GameStatistics;
-import org.secuso.privacyfriendly2048.activities.helper.GameState;
-import org.secuso.privacyfriendly2048.activities.Element;
-import org.secuso.privacyfriendly2048.activities.MainActivity;
-import org.secuso.privacyfriendly2048.activities.GameActivity;
-import org.secuso.privacyfriendly2048.activities.StatsActivity;
-import org.secuso.privacyfriendly2048.helpers.FirstLaunchManager;
 
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.ShapeDrawable;
-import android.icu.util.ValueIterator;
 import android.preference.PreferenceManager;
 import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 
-import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
-import androidx.test.ext.junit.runners.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.android.controller.ActivityController;
+import org.secuso.privacyfriendly2048.activities.Element;
+import org.secuso.privacyfriendly2048.activities.GameActivity;
+import org.secuso.privacyfriendly2048.activities.MainActivity;
+import org.secuso.privacyfriendly2048.activities.StatsActivity;
+import org.secuso.privacyfriendly2048.activities.helper.GameState;
+import org.secuso.privacyfriendly2048.activities.helper.GameStatistics;
+import org.secuso.privacyfriendly2048.helpers.FirstLaunchManager;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.util.Arrays;
-import java.util.Objects;
 
 
 @RunWith(RobolectricTestRunner.class)
